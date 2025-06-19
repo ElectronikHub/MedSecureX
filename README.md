@@ -1,61 +1,151 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>MedSecureX - README</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f7fafc; color: #222; margin: 0; padding: 0 0 40px 0; }
+    .container { max-width: 820px; margin: 40px auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.07); padding: 32px 28px; }
+    h1, h2, h3 { color: #1d4ed8; }
+    h1 { font-size: 2.2rem; margin-bottom: 0.5em; }
+    h2 { font-size: 1.4rem; margin-top: 2em; }
+    h3 { font-size: 1.1rem; margin-top: 1.5em; }
+    ul, ol { margin-left: 1.2em; }
+    code, pre { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 1em; }
+    .features { display: flex; flex-wrap: wrap; gap: 24px; margin: 1.5em 0; }
+    .feature { background: #f1f5fb; border-radius: 10px; padding: 18px 14px; width: 240px; }
+    .feature-title { font-weight: bold; color: #2563eb; margin-bottom: 0.4em; }
+    .footer { text-align: center; color: #aaa; font-size: 0.92em; margin-top: 2em; }
+    @media (max-width: 680px) {
+      .container { padding: 14px 4vw; }
+      .features { flex-direction: column; align-items: stretch; }
+      .feature { width: 100%; }
+    }
+    table { border-collapse: collapse; width: 100%; margin: 1em 0; }
+    th, td { border: 1px solid #e5e7eb; padding: 7px 10px; }
+    th { background: #f1f5fb; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>MedSecureX</h1>
+    <p>
+      <b>MedSecureX</b> is an all-in-one platform for nurses and doctors to seamlessly assign, access, and manage patient data with automation, security, and ease.
+    </p>
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+    <h2>🚀 Features</h2>
+    <div class="features">
+      <div class="feature">
+        <div class="feature-title">Automated Assigning</div>
+        <div>Smart algorithms automatically assign patients and tasks to available medical staff, saving time and reducing errors.</div>
+      </div>
+      <div class="feature">
+        <div class="feature-title">Secure Data Access</div>
+        <div>All patient records and schedules are securely stored and accessible only to authorized personnel.</div>
+      </div>
+      <div class="feature">
+        <div class="feature-title">Real-Time Collaboration</div>
+        <div>Doctors and nurses can collaborate, update records, and receive notifications in real time.</div>
+      </div>
+    </div>
 
-## About Laravel
+    <h2>🛠️ Tech Stack</h2>
+    <ul>
+      <li><b>Frontend:</b> ReactJS, Tailwind CSS, Inertia.js</li>
+      <li><b>Backend:</b> Laravel (PHP)</li>
+      <li><b>Database:</b> MySQL (via XAMPP for local development)</li>
+      <li><b>Other:</b> Inertia.js for seamless SPA-like navigation</li>
+    </ul>
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+    <h2>📂 Project Structure (Relevant Files)</h2>
+    <pre>
+resources/
+└── js/
+    ├── Pages/
+    │   ├── Landing.jsx                # Public landing page
+    │   └── AdminDashboard.jsx         # Admin dashboard
+    ├── Components/
+    │   └── Admin/
+    │       ├── StatCard.jsx           # Statistic cards
+    │       ├── StaffPanel.jsx         # Tabbed doctors/nurses panel
+    │       ├── ScheduleTable.jsx      # Staff schedules table
+    │       └── EditScheduleModal.jsx  # Modal for editing schedules
+    └── Layouts/
+        └── AuthenticatedLayout.jsx    # Layout for authenticated pages
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+app/
+├── Http/
+│   └── Controllers/
+│       └── Admin/
+│           └── ManagementController.php   # Admin dashboard logic
+└── Models/
+    ├── User.php
+    ├── Patient.php
+    └── Schedule.php
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+database/
+└── migrations/
+    ├── ...create_users_table.php
+    ├── ...create_patients_table.php
+    └── ...create_schedules_table.php
 
-## Learning Laravel
+routes/
+└── web.php                               # App routes
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+.env                                      # Environment config (database, mail, etc.)
+    </pre>
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+    <h2>🏁 Getting Started</h2>
+    <ol>
+      <li><b>Clone the repository</b></li>
+      <li><b>Install dependencies</b>
+        <ul>
+          <li>Backend: <code>composer install</code></li>
+          <li>Frontend: <code>npm install</code></li>
+        </ul>
+      </li>
+      <li><b>Set up your <code>.env</code> file</b>
+        <ul>
+          <li>Copy <code>.env.example</code> to <code>.env</code> and update database credentials for XAMPP/MySQL.</li>
+        </ul>
+      </li>
+      <li><b>Run migrations:</b> <code>php artisan migrate</code></li>
+      <li><b>Start the development servers:</b>
+        <ul>
+          <li>Backend: <code>php artisan serve</code></li>
+          <li>Frontend: <code>npm run dev</code></li>
+        </ul>
+      </li>
+      <li><b>Visit</b> <code>http://localhost:8000</code> in your browser.</li>
+    </ol>
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+    <h2>👩‍⚕️ User Roles</h2>
+    <ul>
+      <li><b>Doctor:</b> Access and manage assigned patients, view/edit schedules.</li>
+      <li><b>Nurse:</b> View assignments, update patient status, collaborate with doctors.</li>
+      <li><b>Admin:</b> Manage users, assign roles, oversee schedules and statistics.</li>
+    </ul>
 
-## Laravel Sponsors
+    <h2>📖 Documentation</h2>
+    <ul>
+      <li>See the <b>docs folder</b> or in-app help for more details on each feature and workflow.</li>
+      <li>For API details, see <b>API Reference</b> (if available).</li>
+    </ul>
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+    <h2>🤝 Contributing</h2>
+    <p>
+      Pull requests are welcome! For major changes, please open an issue first to discuss what you would like to change or enhance.
+    </p>
 
-### Premium Partners
+    <h2>📫 Support</h2>
+    <p>
+      For questions or support, email <a href="mailto:support@medsecurex.com">support@medsecurex.com</a>.
+    </p>
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+    <div class="footer">
+      © 2025 MedSecureX. All rights reserved.
+    </div>
+  </div>
+</body>
+</html>
