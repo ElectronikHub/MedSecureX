@@ -161,11 +161,6 @@ project-root/
     <li>Open <code>http://localhost:8000</code> in your browser</li>
   </ol>
 
-  <h2>Contributing</h2>
-  <p>
-    Contributions are welcome! Please fork the repository and submit a pull request.<br>
-    For major changes, open an issue first to discuss what you would like to change.
-  </p>
 
   <h2>License</h2>
   <p>
@@ -177,10 +172,7 @@ project-root/
   </p>
 
   <h2>Frontend File Structure Screenshot</h2>
-  <p>
-    Below is a visual representation of the <code>resources/js/Components</code> folder structure:
-  </p>
-  <img src="https://pplx-res.cloudinary.com/image/private/user_uploads/72204454/903cb067-216e-4d92-87fc-12a2fe6b292f/image.jpg" alt="MedSecureX Frontend Structure" width="350">
-  <img src="https://pplx-res.cloudinary.com/image/private/user_uploads/72204454/d086ac2a-e4c2-4de3-a356-39322c80595f/image.jpg" alt="MedSecureX Frontend Structure" width="350">
+=
+
 </body>
 
