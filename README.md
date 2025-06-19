@@ -5,226 +5,183 @@
   <title>MedSecureX - README</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body {
-      font-family: 'Segoe UI', Arial, sans-serif;
-      background: #f7fafc;
-      color: #222;
+    html, body {
+      height: 100%;
       margin: 0;
       padding: 0;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(135deg, #eaf1fb 0%, #e3ecfa 100%);
+      min-height: 100vh;
+      color: #222;
     }
-    .container {
-      max-width: 900px;
-      margin: 40px auto 0 auto;
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    .header {
+      width: 100%;
       background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
-      padding: 36px 28px 28px 28px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.03);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 24px 48px;
+      position: relative;
+      z-index: 10;
     }
-    h1, h2, h3 {
-      color: #1d4ed8;
-      margin-top: 1.5em;
-      margin-bottom: 0.5em;
+    .brand {
+      color: #2563eb;
+      font-weight: bold;
+      font-size: 1.5rem;
+      letter-spacing: -1px;
     }
-    h1 {
+    .nav {
+      display: flex;
+      gap: 24px;
+      font-size: 1rem;
+    }
+    .nav a {
+      color: #444;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav a:hover {
+      color: #2563eb;
+    }
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 70vh;
+    }
+    .welcome {
       font-size: 2.2rem;
-      margin-top: 0.2em;
+      font-weight: bold;
+      color: #1d4ed8;
+      margin-bottom: 0.5rem;
+      text-align: center;
     }
-    h2 {
-      font-size: 1.4rem;
-      margin-top: 2.2em;
-    }
-    h3 {
+    .subtitle {
+      color: #444;
+      text-align: center;
+      max-width: 550px;
+      margin-bottom: 2.5rem;
       font-size: 1.1rem;
-      margin-top: 1.5em;
-    }
-    ul, ol {
-      margin-left: 1.5em;
-      margin-bottom: 1em;
-    }
-    code, pre {
-      background: #f1f5f9;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-size: 1em;
     }
     .features {
       display: flex;
+      gap: 32px;
+      margin-bottom: 2.5rem;
       flex-wrap: wrap;
-      gap: 24px;
-      margin: 1.5em 0;
-      justify-content: flex-start;
+      justify-content: center;
     }
-    .feature {
-      background: #f1f5fb;
-      border-radius: 10px;
-      padding: 18px 14px;
-      width: 260px;
-      min-width: 200px;
-      flex: 1 1 200px;
-      box-sizing: border-box;
+    .feature-card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      padding: 28px 20px;
+      width: 270px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .feature-icon {
+      font-size: 2.1rem;
+      margin-bottom: 12px;
     }
     .feature-title {
+      color: #1d4ed8;
       font-weight: bold;
-      color: #2563eb;
-      margin-bottom: 0.4em;
+      margin-bottom: 0.5em;
+      text-align: center;
+    }
+    .feature-desc {
+      color: #444;
+      font-size: 1em;
+      text-align: center;
+    }
+    .cta-btn {
+      margin-top: 18px;
+      background: #2563eb;
+      color: #fff;
+      font-weight: 500;
+      border: none;
+      border-radius: 6px;
+      padding: 12px 32px;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .cta-btn:hover {
+      background: #1d4ed8;
     }
     .footer {
       text-align: center;
-      color: #aaa;
-      font-size: 0.92em;
-      margin-top: 2em;
-      padding-top: 1em;
-      border-top: 1px solid #e5e7eb;
+      color: #888;
+      font-size: 0.98em;
+      margin-top: 40px;
+      padding: 18px 0 8px 0;
+      background: transparent;
     }
-    pre {
-      overflow-x: auto;
-      margin: 1em 0;
-      padding: 1em;
-      background: #f8fafc;
-      border-radius: 8px;
-      font-size: 0.96em;
-      line-height: 1.5;
+    @media (max-width: 900px) {
+      .header { padding: 18px 18px; }
+      .features { gap: 18px; }
     }
-    table {
-      border-collapse: collapse;
-      width: 100%;
-      margin: 1.5em 0;
-    }
-    th, td {
-      border: 1px solid #e5e7eb;
-      padding: 7px 10px;
-      text-align: left;
-    }
-    th {
-      background: #f1f5fb;
-    }
-    @media (max-width: 680px) {
-      .container { padding: 14px 4vw; }
-      .features { flex-direction: column; align-items: stretch; }
-      .feature { width: 100%; }
-      pre { font-size: 0.93em; }
+    @media (max-width: 750px) {
+      .features { flex-direction: column; align-items: center; }
+      .feature-card { width: 95vw; max-width: 340px; }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>MedSecureX</h1>
-    <p>
-      <b>MedSecureX</b> is an all-in-one platform for nurses and doctors to seamlessly assign, access, and manage patient data with automation, security, and ease.
-    </p>
-
-    <h2>🚀 Features</h2>
-    <div class="features">
-      <div class="feature">
-        <div class="feature-title">Automated Assigning</div>
-        <div>Smart algorithms automatically assign patients and tasks to available medical staff, saving time and reducing errors.</div>
-      </div>
-      <div class="feature">
-        <div class="feature-title">Secure Data Access</div>
-        <div>All patient records and schedules are securely stored and accessible only to authorized personnel.</div>
-      </div>
-      <div class="feature">
-        <div class="feature-title">Real-Time Collaboration</div>
-        <div>Doctors and nurses can collaborate, update records, and receive notifications in real time.</div>
-      </div>
+  <div class="header">
+    <div class="brand">MedSecureX</div>
+    <div class="nav">
+      <a href="#">Log in</a>
+      <a href="#">Register</a>
     </div>
-
-    <h2>🛠️ Tech Stack</h2>
-    <ul>
-      <li><b>Frontend:</b> ReactJS, Tailwind CSS, Inertia.js</li>
-      <li><b>Backend:</b> Laravel (PHP)</li>
-      <li><b>Database:</b> MySQL (via XAMPP for local development)</li>
-      <li><b>Other:</b> Inertia.js for seamless SPA-like navigation</li>
-    </ul>
-
-    <h2>📂 Project Structure (Relevant Files)</h2>
-    <pre>
-resources/
-└── js/
-    ├── Pages/
-    │   ├── Landing.jsx                # Public landing page
-    │   └── AdminDashboard.jsx         # Admin dashboard
-    ├── Components/
-    │   └── Admin/
-    │       ├── StatCard.jsx           # Statistic cards
-    │       ├── StaffPanel.jsx         # Tabbed doctors/nurses panel
-    │       ├── ScheduleTable.jsx      # Staff schedules table
-    │       └── EditScheduleModal.jsx  # Modal for editing schedules
-    └── Layouts/
-        └── AuthenticatedLayout.jsx    # Layout for authenticated pages
-
-app/
-├── Http/
-│   └── Controllers/
-│       └── Admin/
-│           └── ManagementController.php   # Admin dashboard logic
-└── Models/
-    ├── User.php
-    ├── Patient.php
-    └── Schedule.php
-
-database/
-└── migrations/
-    ├── ...create_users_table.php
-    ├── ...create_patients_table.php
-    └── ...create_schedules_table.php
-
-routes/
-└── web.php                               # App routes
-
-.env                                      # Environment config (database, mail, etc.)
-    </pre>
-
-    <h2>🏁 Getting Started</h2>
-    <ol>
-      <li><b>Clone the repository</b></li>
-      <li><b>Install dependencies</b>
-        <ul>
-          <li>Backend: <code>composer install</code></li>
-          <li>Frontend: <code>npm install</code></li>
-        </ul>
-      </li>
-      <li><b>Set up your <code>.env</code> file</b>
-        <ul>
-          <li>Copy <code>.env.example</code> to <code>.env</code> and update database credentials for XAMPP/MySQL.</li>
-        </ul>
-      </li>
-      <li><b>Run migrations:</b> <code>php artisan migrate</code></li>
-      <li><b>Start the development servers:</b>
-        <ul>
-          <li>Backend: <code>php artisan serve</code></li>
-          <li>Frontend: <code>npm run dev</code></li>
-        </ul>
-      </li>
-      <li><b>Visit</b> <code>http://localhost:8000</code> in your browser.</li>
-    </ol>
-
-    <h2>👩‍⚕️ User Roles</h2>
-    <ul>
-      <li><b>Doctor:</b> Access and manage assigned patients, view/edit schedules.</li>
-      <li><b>Nurse:</b> View assignments, update patient status, collaborate with doctors.</li>
-      <li><b>Admin:</b> Manage users, assign roles, oversee schedules and statistics.</li>
-    </ul>
-
-    <h2>📖 Documentation</h2>
-    <ul>
-      <li>See the <b>docs folder</b> or in-app help for more details on each feature and workflow.</li>
-      <li>For API details, see <b>API Reference</b> (if available).</li>
-    </ul>
-
-    <h2>🤝 Contributing</h2>
-    <p>
-      Pull requests are welcome! For major changes, please open an issue first to discuss what you would like to change or enhance.
-    </p>
-
-    <h2>📫 Support</h2>
-    <p>
-      For questions or support, email <a href="mailto:support@medsecurex.com">support@medsecurex.com</a>.
-    </p>
-
-    <div class="footer">
-      © 2025 MedSecureX. All rights reserved.
+  </div>
+  <div class="main">
+    <div>
+      <div class="welcome">Welcome to MedSecureX</div>
+      <div class="subtitle">
+        The all-in-one platform for nurses and doctors to seamlessly assign,<br>
+        access, and manage patient data with automation, security, and ease.
+      </div>
+      <div class="features">
+        <div class="feature-card">
+          <div class="feature-icon">📝</div>
+          <div class="feature-title">Automated Assigning</div>
+          <div class="feature-desc">
+            Smart algorithms automatically assign patients and tasks to available medical staff, saving time and reducing errors.
+          </div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔒</div>
+          <div class="feature-title">Secure Data Access</div>
+          <div class="feature-desc">
+            All patient records and schedules are securely stored and accessible only to authorized personnel.
+          </div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">💛</div>
+          <div class="feature-title">Real-Time Collaboration</div>
+          <div class="feature-desc">
+            Doctors and nurses can collaborate, update records, and receive notifications in real time.
+          </div>
+        </div>
+      </div>
+      <a class="cta-btn" href="#">Get Started</a>
     </div>
+  </div>
+  <div class="footer">
+    © 2025 MedSecureX. All rights reserved.
   </div>
 </body>
 </html>
