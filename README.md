@@ -5,26 +5,105 @@
   <title>MedSecureX - README</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f7fafc; color: #222; margin: 0; padding: 0 0 40px 0; }
-    .container { max-width: 820px; margin: 40px auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.07); padding: 32px 28px; }
-    h1, h2, h3 { color: #1d4ed8; }
-    h1 { font-size: 2.2rem; margin-bottom: 0.5em; }
-    h2 { font-size: 1.4rem; margin-top: 2em; }
-    h3 { font-size: 1.1rem; margin-top: 1.5em; }
-    ul, ol { margin-left: 1.2em; }
-    code, pre { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 1em; }
-    .features { display: flex; flex-wrap: wrap; gap: 24px; margin: 1.5em 0; }
-    .feature { background: #f1f5fb; border-radius: 10px; padding: 18px 14px; width: 240px; }
-    .feature-title { font-weight: bold; color: #2563eb; margin-bottom: 0.4em; }
-    .footer { text-align: center; color: #aaa; font-size: 0.92em; margin-top: 2em; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f7fafc;
+      color: #222;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 900px;
+      margin: 40px auto 0 auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      padding: 36px 28px 28px 28px;
+    }
+    h1, h2, h3 {
+      color: #1d4ed8;
+      margin-top: 1.5em;
+      margin-bottom: 0.5em;
+    }
+    h1 {
+      font-size: 2.2rem;
+      margin-top: 0.2em;
+    }
+    h2 {
+      font-size: 1.4rem;
+      margin-top: 2.2em;
+    }
+    h3 {
+      font-size: 1.1rem;
+      margin-top: 1.5em;
+    }
+    ul, ol {
+      margin-left: 1.5em;
+      margin-bottom: 1em;
+    }
+    code, pre {
+      background: #f1f5f9;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 1em;
+    }
+    .features {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 24px;
+      margin: 1.5em 0;
+      justify-content: flex-start;
+    }
+    .feature {
+      background: #f1f5fb;
+      border-radius: 10px;
+      padding: 18px 14px;
+      width: 260px;
+      min-width: 200px;
+      flex: 1 1 200px;
+      box-sizing: border-box;
+    }
+    .feature-title {
+      font-weight: bold;
+      color: #2563eb;
+      margin-bottom: 0.4em;
+    }
+    .footer {
+      text-align: center;
+      color: #aaa;
+      font-size: 0.92em;
+      margin-top: 2em;
+      padding-top: 1em;
+      border-top: 1px solid #e5e7eb;
+    }
+    pre {
+      overflow-x: auto;
+      margin: 1em 0;
+      padding: 1em;
+      background: #f8fafc;
+      border-radius: 8px;
+      font-size: 0.96em;
+      line-height: 1.5;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 1.5em 0;
+    }
+    th, td {
+      border: 1px solid #e5e7eb;
+      padding: 7px 10px;
+      text-align: left;
+    }
+    th {
+      background: #f1f5fb;
+    }
     @media (max-width: 680px) {
       .container { padding: 14px 4vw; }
       .features { flex-direction: column; align-items: stretch; }
       .feature { width: 100%; }
+      pre { font-size: 0.93em; }
     }
-    table { border-collapse: collapse; width: 100%; margin: 1em 0; }
-    th, td { border: 1px solid #e5e7eb; padding: 7px 10px; }
-    th { background: #f1f5fb; }
   </style>
 </head>
 <body>
