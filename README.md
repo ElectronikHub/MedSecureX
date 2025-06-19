@@ -171,8 +171,5 @@ project-root/
     <b>Note:</b> This README is based on the current folder structure and system design. For more details, see the code and documentation inside each folder.
   </p>
 
-  <h2>Frontend File Structure Screenshot</h2>
-=
-
 </body>
 
