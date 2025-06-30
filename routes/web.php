@@ -23,10 +23,10 @@ use App\Http\Controllers\PatientController;
 // Public welcome page
 Route::get('/', function () {
     return Inertia::render('Welcome', [
-        'canLogin'       => Route::has('login'),
-        'canRegister'    => Route::has('register'),
+        'canLogin' => Route::has('login'),
+        'canRegister' => Route::has('register'),
         'laravelVersion' => Application::VERSION,
-        'phpVersion'     => PHP_VERSION,
+        'phpVersion' => PHP_VERSION,
     ]);
 });
 
@@ -44,17 +44,17 @@ Route::middleware('auth')->group(function () {
 
 // Role-based dashboard routes, protected by authentication
 Route::middleware(['auth'])->group(function () {
-Route::get('/admin/dashboard', [AdminManagement::class, 'dashboard'])->name('admin.dashboard');
+    Route::get('/admin/dashboard', [AdminManagement::class, 'dashboard'])->name('admin.dashboard');
 
 
-Route::middleware(['auth'])->group(function () {
-    Route::get('/nurse/dashboard', [NurseManagement::class, 'dashboard'])->name('nurse.dashboard');
-});
+    Route::middleware(['auth'])->group(function () {
+        Route::get('/nurse/dashboard', [NurseManagement::class, 'dashboard'])->name('nurse.dashboard');
+    });
 
 
-   Route::middleware(['auth'])->group(function () {
-    Route::get('/doctor/dashboard', [DoctorManagement::class, 'dashboard'])->name('doctor.dashboard');
-});
+    Route::middleware(['auth'])->group(function () {
+        Route::get('/doctor/dashboard', [DoctorManagement::class, 'dashboard'])->name('doctor.dashboard');
+    });
 });
 
 
@@ -66,8 +66,10 @@ Route::get('/api/patients/{id}', function ($id) {
     return response()->json($patient);
 });
 
+Route::put('/admin/users/{user}/role', [AdminManagement::class, 'updateUserRole'])->name('admin.users.updateRole');
 
-require __DIR__.'/auth.php';
+
+require __DIR__ . '/auth.php';
 
 // Patient management routes
 // These routes are accessible to authenticated users

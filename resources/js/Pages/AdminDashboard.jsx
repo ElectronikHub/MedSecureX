@@ -6,46 +6,51 @@ import StatCard from "./Admin/StatCard";
 import StaffPanel from "./Admin/StaffPanel";
 import ScheduleTable from "./Admin/ScheduleTable";
 import EditScheduleModal from "./Admin/EditScheduleModal";
+import UsersPanel from "./Admin/UsersPanel"; // Make sure this is imported
 
-export default function AdminDashboard({ stats, doctors, nurses, schedules }) {
-  const [editingSchedule, setEditingSchedule] = useState(null);
+export default function AdminDashboard({ stats, doctors, nurses, schedules, allUsers }) { // Make sure allUsers is destructured
+    const [editingSchedule, setEditingSchedule] = useState(null);
 
-  const handleSaveSchedule = (id, form) => {
-    // Implement save logic (e.g., Inertia.post/put)
-    setEditingSchedule(null);
-  };
+    const handleSaveSchedule = (id, form) => {
+        // Implement save logic (e.g., Inertia.post/put)
+        setEditingSchedule(null);
+    };
 
-  return (
-    <AuthenticatedLayout>
-      <Head title="Admin Dashboard" />
-      <div className="min-h-screen bg-[#f4f8fe] flex flex-col">
-        <main className="p-6 flex-1 flex flex-col items-center justify-center">
-          <div className="w-full max-w-6xl mx-auto">
-            <h1 className="text-3xl font-extrabold text-gray-900 mb-2">Admin Dashboard</h1>
-            <p className="mt-2 text-gray-600 mb-6">Overview of system statistics</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mt-6">
-              <StatCard title="Total Users" value={stats.totalUsers} color="text-blue-600" />
-              <StatCard title="Total Doctors" value={stats.totalDoctors} color="text-green-600" />
-              <StatCard title="Total Nurses" value={stats.totalNurses} color="text-yellow-600" />
-              <StatCard title="Total Patients" value={stats.totalPatients} color="text-purple-600" />
+    return (
+        <AuthenticatedLayout>
+            <Head title="Admin Dashboard" />
+            <div className="min-h-screen bg-[#f4f8fe] dark:bg-gray-900 flex flex-col transition-colors duration-500">
+                <main className="p-6 flex-1 flex flex-col items-center justify-center">
+                    <div className="w-full max-w-6xl mx-auto">
+                        {/* Existing dashboard content */}
+                        <h1 className="text-3xl font-extrabold text-gray-900 dark:text-gray-100 mb-2">
+                            Admin Dashboard
+                        </h1>
+                        <p className="mt-2 text-gray-600 dark:text-gray-300 mb-6">Overview of system statistics</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mt-6">
+                            <StatCard title="Total Users" value={stats.totalUsers} color="text-blue-600" />
+                            <StatCard title="Total Doctors" value={stats.totalDoctors} color="text-green-600" />
+                            <StatCard title="Total Nurses" value={stats.totalNurses} color="text-yellow-600" />
+                            <StatCard title="Total Patients" value={stats.totalPatients} color="text-purple-600" />
+                        </div>
+                        <StaffPanel doctors={doctors} nurses={nurses} />
+                        <ScheduleTable schedules={schedules} onEdit={setEditingSchedule} />
+                        {editingSchedule && (
+                            <EditScheduleModal
+                                schedule={editingSchedule}
+                                onClose={() => setEditingSchedule(null)}
+                                onSave={handleSaveSchedule}
+                            />
+                        )}
+
+                        {/* Render the UsersPanel */}
+                        <UsersPanel users={allUsers} />
+                    </div>
+                </main>
+                <footer className="text-center text-xs text-gray-400 dark:text-gray-500 py-4 transition-colors duration-500">
+                    © 2025 MedSecureX. All rights reserved.
+                </footer>
             </div>
-            <StaffPanel doctors={doctors} nurses={nurses} />
-            <ScheduleTable schedules={schedules} onEdit={setEditingSchedule} />
-            {editingSchedule && (
-              <EditScheduleModal
-                schedule={editingSchedule}
-                onClose={() => setEditingSchedule(null)}
-                onSave={handleSaveSchedule}
-              />
-            )}
-          </div>
-        </main>
-        <footer className="text-center text-xs text-gray-400 py-4">
-          © 2025 MedSecureX. All rights reserved.
-        </footer>
-      </div>
-    </AuthenticatedLayout>
-  );
+        </AuthenticatedLayout>
+    );
 }
-
-// This component serves as the main dashboard for administrators, providing an overview of system statistics,
