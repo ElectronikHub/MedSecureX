@@ -8,57 +8,57 @@ import TimelinePanel from './Doctor/TimelinePanel';
 // import AssignDoctorForm from './Doctor/AssignDoctorForm'; // Uncomment if needed
 
 export default function DoctorDashboard({
-  patientsToday,
-  stats,
-  timeline,
-  isOnDuty,
-  currentSchedule,
+    patientsToday,
+    stats,
+    timeline,
+    isOnDuty,
+    currentSchedule,
 }) {
-  // Split patients into current and upcoming
-  const currentPatients = patientsToday.filter(p => p.status === 'Completed');
-  const upcomingPatients = patientsToday.filter(p => p.status === 'Upcoming');
+    // Split patients into current and upcoming
+    const currentPatients = patientsToday.filter(p => p.status === 'Completed');
+    const upcomingPatients = patientsToday.filter(p => p.status === 'Upcoming');
 
-  return (
-    <AuthenticatedLayout header={
-      <h2 className="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
-        Doctor Dashboard
-      </h2>
-    }>
-      <Head title="Doctor Dashboard" />
+    return (
+        <AuthenticatedLayout header={
+            <h2 className="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
+                Doctor Dashboard
+            </h2>
+        }>
+            <Head title="Doctor Dashboard" />
 
-      <main className="flex-1 flex flex-col items-center justify-center">
-        <div className="w-full max-w-4xl mx-auto p-8">
-          <h1 className="text-2xl font-bold mb-2 text-blue-800">
-            Welcome back, Dr. {currentSchedule?.user?.name || "Doctor"}
-          </h1>
-          <p className="text-sm text-gray-600 mb-6">
-            Today is {new Date().toLocaleDateString("en-US", {
-              weekday: "long",
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}{" "}
-            |{" "}
-            <span className="text-blue-600 underline cursor-pointer">
-              {patientsToday.length} patients scheduled
-            </span>
-          </p>
+            <main className="flex-1 flex flex-col items-center justify-center">
+                <div className="w-full max-w-4xl mx-auto p-8">
+                    <h1 className="text-2xl font-bold mb-2 text-blue-800">
+                        Welcome back, Dr. {currentSchedule?.user?.name || "Doctor"}
+                    </h1>
+                    <p className="text-sm text-gray-600 mb-6">
+                        Today is {new Date().toLocaleDateString("en-US", {
+                            weekday: "long",
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                        })}{" "}
+                        |{" "}
+                        <span className="text-blue-600 underline cursor-pointer">
+                            {patientsToday.length} patients scheduled
+                        </span>
+                    </p>
 
-          <StatsPanel stats={stats} />
+                    <StatsPanel stats={stats} />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-            <div>
-              <CurrentPatientPanel patients={currentPatients} />
-              <UpcomingPatientsPanel patients={upcomingPatients} />
-            </div>
-            <TimelinePanel timeline={timeline} />
-          </div>
-        </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+                        <div>
+                            <CurrentPatientPanel patients={patientsToday} />
+                            <UpcomingPatientsPanel patients={upcomingPatients} />
+                        </div>
+                        <TimelinePanel timeline={timeline} />
+                    </div>
+                </div>
 
 
-      </main>
-    </AuthenticatedLayout>
-  );
+            </main>
+        </AuthenticatedLayout>
+    );
 }
 
 // This component serves as the main dashboard for doctors, providing an overview of their patients and schedule.

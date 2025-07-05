@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use App\Models\User;
 use App\Models\Patient;
@@ -13,7 +15,6 @@ class ManagementController extends Controller
 {
     public function dashboard()
     {
-        // Stats
         $totalUsers = User::count();
         $totalDoctors = User::where('role', 'doctor')->count();
         $totalNurses = User::where('role', 'nurse')->count();
@@ -25,7 +26,6 @@ class ManagementController extends Controller
             'Off Duty' => 'bg-gray-100 text-gray-700',
         ];
 
-        // Doctors
         $doctors = User::where('role', 'doctor')
             ->get()
             ->map(function ($doctor) use ($statusColors) {
@@ -45,7 +45,6 @@ class ManagementController extends Controller
                 ];
             })->values();
 
-        // Nurses
         $nurses = User::where('role', 'nurse')
             ->get()
             ->map(function ($nurse) use ($statusColors) {
@@ -65,7 +64,6 @@ class ManagementController extends Controller
                 ];
             })->values();
 
-        // Schedules
         $schedules = Schedule::with('user')->get()->map(function ($s) {
             return [
                 'id' => $s->id,
@@ -79,7 +77,6 @@ class ManagementController extends Controller
             ];
         });
 
-        // Fetch all users for the new panel
         $allUsers = User::all()->map(function ($user) use ($statusColors) {
             $status = $user->status ?? 'Active';
             return [
@@ -102,17 +99,12 @@ class ManagementController extends Controller
             'doctors' => $doctors,
             'nurses' => $nurses,
             'schedules' => $schedules,
-            'allUsers' => $allUsers, // Pass all users here
+            'allUsers' => $allUsers,
         ]);
     }
 
-    /**
-     * Update the role of a user.
-     */
     public function updateUserRole(Request $request, User $user)
     {
-
-
         $request->validate([
             'role' => 'nullable|string|in:admin,doctor,nurse,user',
         ]);
@@ -121,5 +113,24 @@ class ManagementController extends Controller
         $user->save();
 
         return response()->json(['message' => 'User role updated successfully']);
+    }
+
+    public function storeStaff(Request $request)
+    {
+        $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'role' => ['required', Rule::in(['admin', 'doctor', 'nurse', 'user'])],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'role' => $request->role,
+            'password' => Hash::make($request->password),
+        ]);
+
+        return redirect()->route('admin.dashboard')->with('success', 'Staff created successfully.');
     }
 }
