@@ -150,4 +150,19 @@ class ManagementController extends Controller
 
         return response()->json(['message' => 'Patient created successfully.', 'patient' => $patient], 201);
     }
+
+    public function updatePatient(Request $request, Patient $patient)
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'age' => ['required', 'integer', 'min:0'],
+            'gender' => ['required', 'string', Rule::in(['Male', 'Female', 'Other'])],
+            'room' => ['nullable', 'string', 'max:255'],
+            'admitted' => ['boolean'],
+        ]);
+
+        $patient->update($validated);
+
+        return response()->json(['message' => 'Patient updated successfully.', 'patient' => $patient]);
+    }
 }

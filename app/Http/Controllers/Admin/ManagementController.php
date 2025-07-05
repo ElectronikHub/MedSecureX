@@ -117,18 +117,18 @@ class ManagementController extends Controller
 
     public function storeStaff(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'role' => ['required', Rule::in(['admin', 'doctor', 'nurse', 'user'])],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
-        User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'role' => $request->role,
-            'password' => Hash::make($request->password),
+        $user = User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'role' => $validated['role'],
+            'password' => Hash::make($validated['password']),
         ]);
 
         return redirect()->route('admin.dashboard')->with('success', 'Staff created successfully.');
