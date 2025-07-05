@@ -24,8 +24,8 @@ class ManagementController extends Controller
         // Check if nurse is currently on duty
         $currentSchedule = Schedule::where('user_id', $user->id)
             ->where('shift_date', $today)
-            ->where('start_time', '<=', $currentTime)
-            ->where('end_time', '>=', $currentTime)
+            ->where('start_time', '<', $currentTime)
+            ->where('end_time', '>', $currentTime)
             ->first();
 
         $isOnDuty = $currentSchedule !== null;

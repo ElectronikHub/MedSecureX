@@ -44,6 +44,10 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/admin/users', [AdminManagement::class, 'storeStaff'])->name('admin.users.storeStaff');
 
     Route::get('/nurse/dashboard', [NurseManagement::class, 'dashboard'])->name('nurse.dashboard');
+
+    // Add this POST route for storing patients
+    Route::post('/nurse/patients', [NurseManagement::class, 'storePatient'])->name('nurse.patients.store');
+
     Route::get('/doctor/dashboard', [DoctorManagement::class, 'dashboard'])->name('doctor.dashboard');
 });
 
