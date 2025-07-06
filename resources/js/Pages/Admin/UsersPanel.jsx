@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 
-// Roles available for selection
 const ALL_ROLES = ['admin', 'doctor', 'nurse', 'user'];
 
 export default function UsersPanel({ users: initialUsers }) {
@@ -9,6 +8,9 @@ export default function UsersPanel({ users: initialUsers }) {
     const [selectedRole, setSelectedRole] = useState('');
     const [loading, setLoading] = useState(false);
     const [filter, setFilter] = useState({ name: '', email: '', role: '' });
+
+    // Modal state
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
     // New user form state
     const [newUser, setNewUser] = useState({
@@ -87,6 +89,23 @@ export default function UsersPanel({ users: initialUsers }) {
         setNewUser((prev) => ({ ...prev, [name]: value }));
     };
 
+    const openAddModal = () => {
+        setIsAddModalOpen(true);
+        setNewUser({
+            name: '',
+            email: '',
+            role: '',
+            password: '',
+            password_confirmation: '',
+        });
+        setAddErrors({});
+    };
+
+    const closeAddModal = () => {
+        setIsAddModalOpen(false);
+        setAddErrors({});
+    };
+
     const handleAddUser = async (e) => {
         e.preventDefault();
         setAdding(true);
@@ -118,14 +137,7 @@ export default function UsersPanel({ users: initialUsers }) {
 
             setUsers((prev) => [...prev, data.user]);
             alert('User added successfully');
-
-            setNewUser({
-                name: '',
-                email: '',
-                role: '',
-                password: '',
-                password_confirmation: '',
-            });
+            closeAddModal();
         } catch (error) {
             alert('Network error: Could not connect to the server.');
             console.error(error);
@@ -171,6 +183,12 @@ export default function UsersPanel({ users: initialUsers }) {
                         </option>
                     ))}
                 </select>
+                <button
+                    onClick={openAddModal}
+                    className="ml-auto px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                    + Add New User
+                </button>
             </div>
 
             {/* Users Table */}
@@ -265,95 +283,109 @@ export default function UsersPanel({ users: initialUsers }) {
                 </tbody>
             </table>
 
-            {/* Add New User Form */}
-            <div className="mt-8 p-6 bg-gray-100 dark:bg-gray-900 rounded max-w-2xl mx-auto">
-                <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Add New User</h3>
-                <form onSubmit={handleAddUser} className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium mb-1" htmlFor="name">Name</label>
-                        <input
-                            id="name"
-                            name="name"
-                            type="text"
-                            value={newUser.name}
-                            onChange={handleNewUserChange}
-                            className={`w-full rounded border p-2 dark:bg-gray-700 dark:text-white ${addErrors.name ? 'border-red-500' : 'border-gray-300'}`}
-                            required
-                        />
-                        {addErrors.name && <p className="text-red-600 text-xs mt-1">{addErrors.name[0]}</p>}
-                    </div>
+            {/* Add User Modal */}
+            {isAddModalOpen && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-md">
+                        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Add New User</h3>
+                        <form onSubmit={handleAddUser} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium mb-1" htmlFor="name">Name</label>
+                                <input
+                                    id="name"
+                                    name="name"
+                                    type="text"
+                                    value={newUser.name}
+                                    onChange={handleNewUserChange}
+                                    className={`w-full rounded border p-2 dark:bg-gray-700 dark:text-white ${addErrors.name ? 'border-red-500' : 'border-gray-300'}`}
+                                    required
+                                />
+                                {addErrors.name && <p className="text-red-600 text-xs mt-1">{addErrors.name[0]}</p>}
+                            </div>
 
-                    <div>
-                        <label className="block text-sm font-medium mb-1" htmlFor="email">Email</label>
-                        <input
-                            id="email"
-                            name="email"
-                            type="email"
-                            value={newUser.email}
-                            onChange={handleNewUserChange}
-                            className={`w-full rounded border p-2 dark:bg-gray-700 dark:text-white ${addErrors.email ? 'border-red-500' : 'border-gray-300'}`}
-                            required
-                        />
-                        {addErrors.email && <p className="text-red-600 text-xs mt-1">{addErrors.email[0]}</p>}
-                    </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-1" htmlFor="email">Email</label>
+                                <input
+                                    id="email"
+                                    name="email"
+                                    type="email"
+                                    value={newUser.email}
+                                    onChange={handleNewUserChange}
+                                    className={`w-full rounded border p-2 dark:bg-gray-700 dark:text-white ${addErrors.email ? 'border-red-500' : 'border-gray-300'}`}
+                                    required
+                                />
+                                {addErrors.email && <p className="text-red-600 text-xs mt-1">{addErrors.email[0]}</p>}
+                            </div>
 
-                    <div>
-                        <label className="block text-sm font-medium mb-1" htmlFor="role">Role</label>
-                        <select
-                            id="role"
-                            name="role"
-                            value={newUser.role}
-                            onChange={handleNewUserChange}
-                            className={`w-full rounded border p-2 dark:bg-gray-700 dark:text-white ${addErrors.role ? 'border-red-500' : 'border-gray-300'}`}
-                            required
-                        >
-                            <option value="">Select Role</option>
-                            {ALL_ROLES.map(role => (
-                                <option key={role} value={role}>
-                                    {role.charAt(0).toUpperCase() + role.slice(1)}
-                                </option>
-                            ))}
-                        </select>
-                        {addErrors.role && <p className="text-red-600 text-xs mt-1">{addErrors.role[0]}</p>}
-                    </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-1" htmlFor="role">Role</label>
+                                <select
+                                    id="role"
+                                    name="role"
+                                    value={newUser.role}
+                                    onChange={handleNewUserChange}
+                                    className={`w-full rounded border p-2 dark:bg-gray-700 dark:text-white ${addErrors.role ? 'border-red-500' : 'border-gray-300'}`}
+                                    required
+                                >
+                                    <option value="">Select Role</option>
+                                    {ALL_ROLES.map(role => (
+                                        <option key={role} value={role}>
+                                            {role.charAt(0).toUpperCase() + role.slice(1)}
+                                        </option>
+                                    ))}
+                                </select>
+                                {addErrors.role && <p className="text-red-600 text-xs mt-1">{addErrors.role[0]}</p>}
+                            </div>
 
-                    <div>
-                        <label className="block text-sm font-medium mb-1" htmlFor="password">Password</label>
-                        <input
-                            id="password"
-                            name="password"
-                            type="password"
-                            value={newUser.password}
-                            onChange={handleNewUserChange}
-                            className={`w-full rounded border p-2 dark:bg-gray-700 dark:text-white ${addErrors.password ? 'border-red-500' : 'border-gray-300'}`}
-                            required
-                        />
-                        {addErrors.password && <p className="text-red-600 text-xs mt-1">{addErrors.password[0]}</p>}
-                    </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-1" htmlFor="password">Password</label>
+                                <input
+                                    id="password"
+                                    name="password"
+                                    type="password"
+                                    value={newUser.password}
+                                    onChange={handleNewUserChange}
+                                    className={`w-full rounded border p-2 dark:bg-gray-700 dark:text-white ${addErrors.password ? 'border-red-500' : 'border-gray-300'}`}
+                                    required
+                                />
+                                {addErrors.password && <p className="text-red-600 text-xs mt-1">{addErrors.password[0]}</p>}
+                            </div>
 
-                    <div>
-                        <label className="block text-sm font-medium mb-1" htmlFor="password_confirmation">Confirm Password</label>
-                        <input
-                            id="password_confirmation"
-                            name="password_confirmation"
-                            type="password"
-                            value={newUser.password_confirmation}
-                            onChange={handleNewUserChange}
-                            className={`w-full rounded border p-2 dark:bg-gray-700 dark:text-white ${addErrors.password_confirmation ? 'border-red-500' : 'border-gray-300'}`}
-                            required
-                        />
-                        {addErrors.password_confirmation && <p className="text-red-600 text-xs mt-1">{addErrors.password_confirmation[0]}</p>}
-                    </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-1" htmlFor="password_confirmation">Confirm Password</label>
+                                <input
+                                    id="password_confirmation"
+                                    name="password_confirmation"
+                                    type="password"
+                                    value={newUser.password_confirmation}
+                                    onChange={handleNewUserChange}
+                                    className={`w-full rounded border p-2 dark:bg-gray-700 dark:text-white ${addErrors.password_confirmation ? 'border-red-500' : 'border-gray-300'}`}
+                                    required
+                                />
+                                {addErrors.password_confirmation && <p className="text-red-600 text-xs mt-1">{addErrors.password_confirmation[0]}</p>}
+                            </div>
 
-                    <button
-                        type="submit"
-                        disabled={adding}
-                        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                    >
-                        {adding ? 'Adding...' : 'Add User'}
-                    </button>
-                </form>
-            </div>
+                            <div className="flex justify-end gap-2">
+                                <button
+                                    type="button"
+                                    onClick={closeAddModal}
+                                    disabled={adding}
+                                    className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={adding}
+                                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                                >
+                                    {adding ? 'Adding...' : 'Add User'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
