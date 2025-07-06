@@ -11,6 +11,18 @@ export default function UsersPanel({ users: initialUsers }) {
     const [loading, setLoading] = useState(false);
     const [filter, setFilter] = useState({ name: '', email: '', role: '' });
 
+    const getStatusColorClass = (status) => {
+        switch (status) {
+            case 'Active':
+                return 'bg-green-100 text-green-700';
+            case 'Retired':
+                return 'bg-yellow-900 text-yellow-100'; // brownish background with light text
+            // Add other statuses if needed
+            default:
+                return 'bg-gray-100 text-gray-700';
+        }
+    };
+
     // Modal state for Add User
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
@@ -281,7 +293,7 @@ export default function UsersPanel({ users: initialUsers }) {
                                             ))}
                                         </select>
                                     ) : (
-                                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${user.statusColor}`}>
+                                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColorClass(user.status)}`}>
                                             {user.status}
                                         </span>
                                     )}
