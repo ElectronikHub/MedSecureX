@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import EditPatientModal from './EditPatientModal'; // Your existing edit modal
-import AddPatientModal from './AddPatientModal';   // Your add modal component
+import EditPatientModal from './EditPatientModal';
+import AddPatientModal from './AddPatientModal';
 
 export default function PatientsPanel({
     patients,
@@ -13,125 +13,31 @@ export default function PatientsPanel({
 }) {
     const [editingPatient, setEditingPatient] = useState(null);
     const [addModalOpen, setAddModalOpen] = useState(false);
-    const [newPatientForm, setNewPatientForm] = useState({
-        name: '',
-        patient_code: '',
-        age: '',
-        gender: '',
-        room: '',
-        reason: '',
-        appointment_date: '',
-        admitted: false,
-        doctor_id: '',
-        nurse_id: '',
-    });
-    const [formErrors, setFormErrors] = useState({});
-    const [loading, setLoading] = useState(false);
 
-    // Helper to get CSRF token from meta tag
-    const getCsrfToken = () => {
-        const token = document.querySelector('meta[name="csrf-token"]');
-        return token ? token.getAttribute('content') : '';
-    };
+    // Open add modal with default doctor/nurse selected
+    const openAddModal = () => setAddModalOpen(true);
+    const closeAddModal = () => setAddModalOpen(false);
 
-    // Generate unique patient code, e.g. P-YYYYMMDD-XXXX
-    const generatePatientCode = () => {
-        const datePart = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-        const randomPart = Math.floor(1000 + Math.random() * 9000); // 4 digit random number
-        return `P-${datePart}-${randomPart}`;
-    };
-
-    // Open Add Modal and initialize form
-    const openAddModal = () => {
-        setNewPatientForm({
-            name: '',
-            patient_code: generatePatientCode(),
-            age: '',
-            gender: '',
-            room: '',
-            reason: '',
-            appointment_date: new Date().toISOString().slice(0, 10), // Default to today
-            admitted: false,
-            doctor_id: doctors.length > 0 ? doctors[0].id : '',
-            nurse_id: nurses.length > 0 ? nurses[0].id : '',
-        });
-        setFormErrors({});
-        setAddModalOpen(true);
-    };
-
-    const closeAddModal = () => {
-        setAddModalOpen(false);
-        setFormErrors({});
-    };
-
-    // Handle form input changes for new patient
-    const handleNewPatientChange = (e) => {
-        const { name, value, type, checked } = e.target;
-        setNewPatientForm(prev => ({
-            ...prev,
-            [name]: type === 'checkbox' ? checked : value,
-        }));
-    };
-
-    // Submit new patient form with live update
-    const handleAddPatientSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        setFormErrors({});
-
-        try {
-            const response = await fetch('/nurse/patients', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': getCsrfToken(),
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify(newPatientForm),
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                alert('Patient added successfully!');
-                onAddPatient(data.patient || data); // Update parent state live
-                closeAddModal();
-            } else if (response.status === 422) {
-                setFormErrors(data.errors || {});
-            } else {
-                alert(data.message || 'An error occurred while adding the patient.');
-            }
-        } catch (error) {
-            console.error('Network error:', error);
-            alert('Network error: Could not connect to the server.');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // Delete patient with confirmation and live update
-    const handleDeletePatientClick = async (patientId) => {
+    // Delete patient handler with confirmation and live update
+    const handleDelete = async (id) => {
         if (!window.confirm('Are you sure you want to delete this patient?')) return;
-
         try {
-            const response = await fetch(`/nurse/patients/${patientId}`, {
+            const response = await fetch(`/nurse/patients/${id}`, {
                 method: 'DELETE',
                 headers: {
-                    'X-CSRF-TOKEN': getCsrfToken(),
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
                     'Accept': 'application/json',
                 },
             });
-
             if (response.ok) {
                 alert('Patient deleted successfully!');
-                onDeletePatient(patientId); // Update parent state live
+                onDeletePatient(id);
             } else {
                 const data = await response.json();
                 alert(data.message || 'Failed to delete patient.');
             }
         } catch (error) {
-            console.error('Network error:', error);
-            alert('Network error: Could not connect to the server.');
+            alert('Network error.');
         }
     };
 
@@ -151,21 +57,20 @@ export default function PatientsPanel({
         <div className="bg-white rounded-lg shadow p-4 md:p-6 w-full max-w-3xl mx-auto">
             <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-2">
                 <h3 className="font-semibold text-lg md:text-xl text-blue-700">Today's Patients</h3>
-                <div className="flex gap-2">
-                    <button
-                        onClick={openAddModal}
-                        className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-                    >
-                        + Add Patient
-                    </button>
-                </div>
+                <button
+                    onClick={openAddModal}
+                    className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+                >
+                    + Add Patient
+                </button>
             </div>
+
             <div className="space-y-3">
                 {patients.length === 0 && (
                     <div className="text-center text-gray-400 py-8">No patients scheduled for today.</div>
                 )}
-                {patients.map((p, idx) => (
-                    <div key={p.id || idx} className="flex flex-col md:flex-row items-start md:items-center justify-between border-b py-2 gap-2">
+                {patients.map((p) => (
+                    <div key={p.id} className="flex flex-col md:flex-row items-start md:items-center justify-between border-b py-2 gap-2">
                         <div className="flex items-center space-x-3">
                             <span
                                 className="rounded-full px-3 py-2 text-white font-bold text-sm"
@@ -216,7 +121,7 @@ export default function PatientsPanel({
                                 Edit
                             </button>
                             <button
-                                onClick={() => handleDeletePatientClick(p.id)}
+                                onClick={() => handleDelete(p.id)}
                                 className="ml-2 p-1 rounded hover:bg-red-50 text-red-600"
                                 title="Delete Patient"
                                 aria-label={`Delete patient ${p.name}`}
@@ -244,13 +149,9 @@ export default function PatientsPanel({
             <AddPatientModal
                 open={addModalOpen}
                 onClose={closeAddModal}
-                form={newPatientForm}
-                errors={formErrors}
-                onChange={handleNewPatientChange}
-                onSubmit={handleAddPatientSubmit}
-                loading={loading}
                 doctors={doctors}
                 nurses={nurses}
+                onAddPatient={onAddPatient}
             />
         </div>
     );

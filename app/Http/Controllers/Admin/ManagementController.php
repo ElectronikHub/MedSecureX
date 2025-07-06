@@ -117,7 +117,6 @@ class ManagementController extends Controller
         return response()->json(['message' => 'User updated successfully']);
     }
 
-
     public function storeStaff(Request $request)
     {
         $validated = $request->validate([

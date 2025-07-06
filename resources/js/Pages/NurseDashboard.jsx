@@ -4,33 +4,21 @@ import { Head } from '@inertiajs/react';
 import WelcomePanel from './Nurse/WelcomePanel';
 import StatsPanel from './Nurse/StatsPanel';
 import PatientsPanel from './Nurse/PatientsPanel';
-import SchedulePanel from './Nurse/SchedulePanel';
 import NotificationsPanel from './Nurse/NotificationsPanel';
 
-export default function NurseDashboard({ patients: initialPatients, schedule, stats, notifications, isOnDuty }) {
-    // Manage patients state locally to support live updates
+export default function NurseDashboard({ patients: initialPatients, schedule, stats, notifications, isOnDuty, doctors, nurses }) {
     const [patients, setPatients] = useState(initialPatients);
 
-    // Handler to update a patient in the local state after editing
     const handleUpdatePatient = (updatedPatient) => {
-        setPatients((prevPatients) =>
-            prevPatients.map((p) => (p.id === updatedPatient.id ? updatedPatient : p))
-        );
+        setPatients(prev => prev.map(p => (p.id === updatedPatient.id ? updatedPatient : p)));
     };
 
-    // Handler to add a new patient to local state after adding
     const handleAddPatient = (newPatient) => {
-        setPatients((prev) => [...prev, newPatient]);
+        setPatients(prev => [...prev, newPatient]);
     };
 
-    // Handler to delete a patient from local state
     const handleDeletePatient = (id) => {
-        setPatients((prev) => prev.filter((p) => p.id !== id));
-    };
-
-    // Placeholder function for marking schedule items completed
-    const handleMarkCompleted = (id) => {
-        console.log('Mark completed for schedule id:', id);
+        setPatients(prev => prev.filter(p => p.id !== id));
     };
 
     return (
@@ -58,13 +46,14 @@ export default function NurseDashboard({ patients: initialPatients, schedule, st
                         <PatientsPanel
                             patients={patients}
                             isOnDuty={isOnDuty}
-                            onUpdatePatient={handleUpdatePatient}  // For editing
-                            onAddPatient={handleAddPatient}        // For adding
-                            onDeletePatient={handleDeletePatient}  // For deleting
+                            onUpdatePatient={handleUpdatePatient}
+                            onAddPatient={handleAddPatient}
+                            onDeletePatient={handleDeletePatient}
+                            doctors={doctors}
+                            nurses={nurses}
                         />
                     </div>
                     <div className="space-y-6">
-                        {/* <SchedulePanel schedule={schedule} onMarkCompleted={handleMarkCompleted} /> */}
                         <NotificationsPanel notifications={notifications} />
                     </div>
                 </div>
