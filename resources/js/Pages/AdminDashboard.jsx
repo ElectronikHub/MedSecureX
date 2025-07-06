@@ -11,6 +11,7 @@ export default function AdminDashboard({ stats, doctors, nurses, schedules, allU
     const [editingSchedule, setEditingSchedule] = useState(null);
     const [showModal, setShowModal] = useState(false);
     const [scheduleList, setScheduleList] = useState(schedules);
+    const [loading, setLoading] = useState(false);
 
     // Open modal for editing
     const handleEdit = (schedule) => {
@@ -24,14 +25,16 @@ export default function AdminDashboard({ stats, doctors, nurses, schedules, allU
         setShowModal(true);
     };
 
-    // Close modal
+    // Close modal and reset loading
     const handleClose = () => {
         setShowModal(false);
         setEditingSchedule(null);
+        setLoading(false);
     };
 
     // Save schedule (create or update)
     const handleSaveSchedule = async (id, form) => {
+        setLoading(true);
         try {
             const url = id ? `/admin/schedules/${id}` : "/admin/schedules";
             const method = id ? "PUT" : "POST";
@@ -67,6 +70,8 @@ export default function AdminDashboard({ stats, doctors, nurses, schedules, allU
             handleClose();
         } catch (error) {
             alert(error.message);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -94,6 +99,7 @@ export default function AdminDashboard({ stats, doctors, nurses, schedules, allU
                                 onClose={handleClose}
                                 onSave={handleSaveSchedule}
                                 users={[...doctors, ...nurses]}
+                                loading={loading}
                             />
                         )}
                         <UsersPanel users={allUsers} />

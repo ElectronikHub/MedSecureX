@@ -29,9 +29,33 @@ export default function ScheduleTable({ schedules, onEdit, onAdd }) {
                     + Add Schedule
                 </button>
             </h3>
-            {/* Filters here (same as before) */}
             <div className="flex flex-wrap gap-4 mb-4">
-                {/* ... filters omitted for brevity, same as previous */}
+                <input
+                    type="date"
+                    value={filterDate}
+                    onChange={e => setFilterDate(e.target.value)}
+                    className="border rounded p-2"
+                />
+                <select
+                    value={filterRole}
+                    onChange={e => setFilterRole(e.target.value)}
+                    className="border rounded p-2"
+                >
+                    <option value="">All Roles</option>
+                    {uniqueRoles.map(role => (
+                        <option key={role} value={role}>{role}</option>
+                    ))}
+                </select>
+                <select
+                    value={filterDept}
+                    onChange={e => setFilterDept(e.target.value)}
+                    className="border rounded p-2"
+                >
+                    <option value="">All Departments</option>
+                    {uniqueDepartments.map(dept => (
+                        <option key={dept} value={dept}>{dept}</option>
+                    ))}
+                </select>
             </div>
             <table className="w-full text-sm border-collapse">
                 <thead>
