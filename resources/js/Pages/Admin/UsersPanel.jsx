@@ -1,7 +1,17 @@
 import React, { useState } from 'react';
 
 const ALL_ROLES = ['admin', 'doctor', 'nurse', 'user'];
-const ALL_STATUSES = ['Active', 'Retired']; // Add more statuses as needed
+const ALL_STATUSES = ['Active', 'Retired'];
+
+// Utility to generate random temporary password
+const generateTempPassword = (length = 10) => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()';
+    let pass = '';
+    for (let i = 0; i < length; i++) {
+        pass += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return pass;
+};
 
 export default function UsersPanel({ users: initialUsers }) {
     const [users, setUsers] = useState(initialUsers);
@@ -11,19 +21,7 @@ export default function UsersPanel({ users: initialUsers }) {
     const [loading, setLoading] = useState(false);
     const [filter, setFilter] = useState({ name: '', email: '', role: '' });
 
-    const getStatusColorClass = (status) => {
-        switch (status) {
-            case 'Active':
-                return 'bg-green-100 text-green-700';
-            case 'Retired':
-                return 'bg-yellow-900 text-yellow-100'; // brownish background with light text
-            // Add other statuses if needed
-            default:
-                return 'bg-gray-100 text-gray-700';
-        }
-    };
-
-    // Modal state for Add User
+    // Modal state
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
     // New user form state
@@ -31,9 +29,9 @@ export default function UsersPanel({ users: initialUsers }) {
         name: '',
         email: '',
         role: '',
+        status: 'Active',
         password: '',
         password_confirmation: '',
-        status: 'Active', // default new user status
     });
     const [tempPassword, setTempPassword] = useState('');
     const [adding, setAdding] = useState(false);
@@ -56,7 +54,6 @@ export default function UsersPanel({ users: initialUsers }) {
         setSelectedStatus('');
     };
 
-    // Save updated role and status
     const saveUser = async (userId) => {
         setLoading(true);
         try {
@@ -96,12 +93,20 @@ export default function UsersPanel({ users: initialUsers }) {
         setFilter((prev) => ({ ...prev, [name]: value }));
     };
 
+    // Filter users by name, email, role
     const filteredUsers = users.filter((user) => {
         return (
             user.name.toLowerCase().includes(filter.name.toLowerCase()) &&
             user.email.toLowerCase().includes(filter.email.toLowerCase()) &&
             (filter.role === '' || user.role === filter.role)
         );
+    });
+
+    // Sort so Active users appear on top
+    const sortedUsers = filteredUsers.sort((a, b) => {
+        if (a.status === 'Active' && b.status !== 'Active') return -1;
+        if (a.status !== 'Active' && b.status === 'Active') return 1;
+        return 0;
     });
 
     const handleNewUserChange = (e) => {
@@ -169,14 +174,16 @@ export default function UsersPanel({ users: initialUsers }) {
         }
     };
 
-    // Temporary password generator
-    const generateTempPassword = (length = 10) => {
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()';
-        let pass = '';
-        for (let i = 0; i < length; i++) {
-            pass += chars.charAt(Math.floor(Math.random() * chars.length));
+    // Status badge color helper
+    const getStatusColorClass = (status) => {
+        switch (status) {
+            case 'Active':
+                return 'bg-green-100 text-green-700';
+            case 'Retired':
+                return 'bg-yellow-900 text-yellow-100'; // brownish background
+            default:
+                return 'bg-gray-100 text-gray-700';
         }
-        return pass;
     };
 
     return (
@@ -244,14 +251,14 @@ export default function UsersPanel({ users: initialUsers }) {
                     </tr>
                 </thead>
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                    {filteredUsers.length === 0 ? (
+                    {sortedUsers.length === 0 ? (
                         <tr>
                             <td colSpan={5} className="text-center text-gray-400 py-6">
                                 No users found.
                             </td>
                         </tr>
                     ) : (
-                        filteredUsers.map(user => (
+                        sortedUsers.map(user => (
                             <tr key={user.id}>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
                                     {user.name}
@@ -341,8 +348,6 @@ export default function UsersPanel({ users: initialUsers }) {
                             Please communicate this password securely to the new user.
                         </p>
                         <form onSubmit={handleAddUser} className="space-y-4">
-                            {/* Name, Email, Role inputs same as before */}
-
                             <div>
                                 <label className="block text-sm font-medium mb-1" htmlFor="name">Name</label>
                                 <input
@@ -410,7 +415,6 @@ export default function UsersPanel({ users: initialUsers }) {
                                 {addErrors.status && <p className="text-red-600 text-xs mt-1">{addErrors.status[0]}</p>}
                             </div>
 
-                            {/* Password fields pre-filled and read-only */}
                             <div>
                                 <label className="block text-sm font-medium mb-1" htmlFor="password">Password</label>
                                 <input
