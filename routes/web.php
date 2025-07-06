@@ -99,9 +99,5 @@ Route::get('/api/patients/{id}', function ($id) {
 });
 
 
-Route::middleware(['auth'])->prefix('doctor')->name('doctor.')->group(function () {
-    Route::resource('patients', PatientController::class);
-});
-
 
 require __DIR__ . '/auth.php';
