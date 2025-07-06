@@ -8,7 +8,6 @@ export default function EditScheduleModal({ schedule, onClose, onSave, users }) 
         user_id: "",
     });
 
-    // Populate form when schedule changes (for edit), or reset for new
     useEffect(() => {
         if (schedule) {
             setForm({

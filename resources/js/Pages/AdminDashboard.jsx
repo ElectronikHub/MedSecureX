@@ -9,13 +9,35 @@ import UsersPanel from "./Admin/UsersPanel";
 
 export default function AdminDashboard({ stats, doctors, nurses, schedules, allUsers }) {
     const [editingSchedule, setEditingSchedule] = useState(null);
+    const [showModal, setShowModal] = useState(false);
     const [scheduleList, setScheduleList] = useState(schedules);
 
-    // Save schedule to backend (update)
+    // Open modal for editing
+    const handleEdit = (schedule) => {
+        setEditingSchedule(schedule);
+        setShowModal(true);
+    };
+
+    // Open modal for adding new schedule
+    const handleAdd = () => {
+        setEditingSchedule(null); // No schedule means adding new
+        setShowModal(true);
+    };
+
+    // Close modal
+    const handleClose = () => {
+        setShowModal(false);
+        setEditingSchedule(null);
+    };
+
+    // Save schedule (create or update)
     const handleSaveSchedule = async (id, form) => {
         try {
-            const response = await fetch(`/admin/schedules/${id}`, {
-                method: "PUT",
+            const url = id ? `/admin/schedules/${id}` : "/admin/schedules";
+            const method = id ? "PUT" : "POST";
+
+            const response = await fetch(url, {
+                method,
                 headers: {
                     "Content-Type": "application/json",
                     "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').getAttribute("content"),
@@ -26,18 +48,23 @@ export default function AdminDashboard({ stats, doctors, nurses, schedules, allU
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.message || "Failed to update schedule");
+                throw new Error(errorData.message || "Failed to save schedule");
             }
 
             const data = await response.json();
 
-            // Update local schedule list with updated schedule
-            setScheduleList((prev) =>
-                prev.map((sch) => (sch.id === id ? data.schedule : sch))
-            );
+            if (id) {
+                // Update existing schedule in list
+                setScheduleList((prev) =>
+                    prev.map((sch) => (sch.id === id ? data.schedule : sch))
+                );
+            } else {
+                // Add new schedule to list
+                setScheduleList((prev) => [...prev, data.schedule]);
+            }
 
             alert(data.message);
-            setEditingSchedule(null);
+            handleClose();
         } catch (error) {
             alert(error.message);
         }
@@ -60,13 +87,13 @@ export default function AdminDashboard({ stats, doctors, nurses, schedules, allU
                             <StatCard title="Total Patients" value={stats.totalPatients} color="text-purple-600" />
                         </div>
                         <StaffPanel doctors={doctors} nurses={nurses} />
-                        <ScheduleTable schedules={scheduleList} onEdit={setEditingSchedule} />
-                        {editingSchedule && (
+                        <ScheduleTable schedules={scheduleList} onEdit={handleEdit} onAdd={handleAdd} />
+                        {showModal && (
                             <EditScheduleModal
                                 schedule={editingSchedule}
-                                onClose={() => setEditingSchedule(null)}
+                                onClose={handleClose}
                                 onSave={handleSaveSchedule}
-                                users={[...doctors, ...nurses]} // Pass users for assigning schedule if needed
+                                users={[...doctors, ...nurses]}
                             />
                         )}
                         <UsersPanel users={allUsers} />
