@@ -158,6 +158,8 @@ class ManagementController extends Controller
             'age' => ['required', 'integer', 'min:0'],
             'gender' => ['required', 'string', Rule::in(['Male', 'Female', 'Other'])],
             'room' => ['nullable', 'string', 'max:255'],
+            'reason' => ['nullable', 'string', 'max:500'],
+            'status' => ['nullable', 'string', 'in:Active,Pending,Completed,Cancelled'], // validate status
             'admitted' => ['boolean'],
         ]);
 
@@ -165,4 +167,5 @@ class ManagementController extends Controller
 
         return response()->json(['message' => 'Patient updated successfully.', 'patient' => $patient]);
     }
+
 }
