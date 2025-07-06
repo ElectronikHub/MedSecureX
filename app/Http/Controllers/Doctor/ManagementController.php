@@ -28,12 +28,26 @@ class ManagementController extends Controller
         $isOnDuty = $currentSchedule !== null;
 
         $patientsToday = collect();
+        $admittedPatients = collect();
         $stats = [];
         $timeline = [];
 
         if ($isOnDuty) {
-            // Fetch admitted patients assigned to this doctor scheduled for today
-            // Filter by appointment_date (date column), not appointment_start_time (time)
+            // Fetch admitted patients assigned to this doctor (regardless of appointment_date)
+            $admittedPatients = Patient::where('doctor_id', $doctorId)
+                ->where('admitted', true)
+                ->get()
+                ->map(function ($patient) {
+                    return [
+                        'id' => $patient->id,
+                        'name' => $patient->name,
+                        'room' => $patient->room,
+                        'admission_timestamp' => $patient->admission_timestamp ? $patient->admission_timestamp->format('M d, Y h:i A') : null,
+                        'reason' => $patient->reason,
+                    ];
+                });
+
+            // Existing patientsToday and stats logic here if needed
             $patientsToday = Patient::where('doctor_id', $doctorId)
                 ->where('admitted', true)
                 ->whereDate('appointment_date', $today)
@@ -86,10 +100,12 @@ class ManagementController extends Controller
 
         return Inertia::render('DoctorDashboard', [
             'patientsToday' => $patientsToday,
+            'admittedPatients' => $admittedPatients,
             'stats' => $stats,
             'timeline' => $timeline,
             'isOnDuty' => $isOnDuty,
             'currentSchedule' => $currentSchedule,
         ]);
     }
+
 }

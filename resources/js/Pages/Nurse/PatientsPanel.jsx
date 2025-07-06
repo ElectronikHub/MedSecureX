@@ -122,14 +122,14 @@ export default function PatientsPanel({
                             >
                                 Edit
                             </button>
-                            <button
+                            {/* <button
                                 onClick={() => handleDelete(p.id)}
                                 className="ml-2 p-1 rounded hover:bg-red-50 text-red-600"
                                 title="Delete Patient"
                                 aria-label={`Delete patient ${p.name}`}
                             >
                                 Delete
-                            </button>
+                            </button> */}
                         </div>
                     </div>
                 ))}
