@@ -4,15 +4,16 @@ export default function CurrentPatientPanel({ patients }) {
     if (!patients.length) {
         return (
             <div className="bg-white rounded-lg shadow p-4 mb-6">
-                <h2 className="font-semibold text-lg mb-2 text-black">Current Patients</h2>
-                <p className="text-gray-500">No current patients.</p>
+                <h2 className="font-semibold text-lg mb-2 text-black">All Patients</h2>
+                <p className="text-gray-500">No patients found.</p>
             </div>
         );
     }
+
     return (
-        <div className="bg-white rounded-lg shadow p-4 mb-6">
-            <h2 className="font-semibold text-lg mb-2">Current Patients</h2>
-            <table className="w-full text-left border-collapse">
+        <div className="bg-white rounded-lg shadow p-4 mb-6 overflow-auto max-h-[600px]">
+            <h2 className="font-semibold text-lg mb-2">All Patients</h2>
+            <table className="w-full text-left border-collapse table-auto">
                 <thead>
                     <tr>
                         <th className="border-b p-2">Name</th>
@@ -22,14 +23,24 @@ export default function CurrentPatientPanel({ patients }) {
                     </tr>
                 </thead>
                 <tbody>
-                    {patients.map((patient) => (
-                        <tr key={patient.id} className="border-b hover:bg-gray-50">
-                            <td className="p-2">{patient.name}</td>
-                            <td className="p-2">{patient.appointment_time}</td>
-                            <td className="p-2">{patient.reason}</td>
-                            <td className="p-2">{patient.admission_status}</td>
-                        </tr>
-                    ))}
+                    {patients.map((patient) => {
+                        // Compose appointment time string
+                        const appointmentTime = patient.appointment_start_time && patient.appointment_end_time
+                            ? `${patient.appointment_start_time} - ${patient.appointment_end_time}`
+                            : "N/A";
+
+                        // Admission status display
+                        const admissionStatus = patient.admitted ? "Admitted" : "Not Admitted";
+
+                        return (
+                            <tr key={patient.id} className="border-b hover:bg-gray-50">
+                                <td className="p-2">{patient.name}</td>
+                                <td className="p-2">{appointmentTime}</td>
+                                <td className="p-2">{patient.reason || "N/A"}</td>
+                                <td className="p-2">{admissionStatus}</td>
+                            </tr>
+                        );
+                    })}
                 </tbody>
             </table>
         </div>

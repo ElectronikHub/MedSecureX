@@ -5,66 +5,200 @@ namespace App\Http\Controllers\Doctor;
 use App\Http\Controllers\Controller;
 use Inertia\Inertia;
 use App\Models\Patient;
+use App\Models\Schedule;
+use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use Illuminate\Validation\Rule;
 
 class ManagementController extends Controller
 {
     public function dashboard()
     {
-        $doctorId = Auth::id();
-        $today = Carbon::now('Asia/Manila')->toDateString();
+        $user = Auth::user();
+        $now = Carbon::now('Asia/Manila');
+        $today = $now->toDateString();
+        $currentTime = $now->format('H:i:s');
 
-        // Fetch patients scheduled for today assigned to this doctor
-        $patientsToday = Patient::where('doctor_id', $doctorId)
-            ->whereDate('appointment_date', $today)
-            ->get()
-            ->map(function ($patient) {
-                $startTime = $patient->appointment_start_time
-                    ? Carbon::parse($patient->appointment_start_time)->format('h:i A')
-                    : null;
-                $endTime = $patient->appointment_end_time
-                    ? Carbon::parse($patient->appointment_end_time)->format('h:i A')
-                    : null;
+        // Check if doctor is currently on duty
+        $currentSchedule = Schedule::where('user_id', $user->id)
+            ->where('shift_date', $today)
+            ->where('start_time', '<=', $currentTime)
+            ->where('end_time', '>=', $currentTime)
+            ->first();
 
-                return [
-                    'id' => $patient->id,
-                    'name' => $patient->name,
-                    'appointment_time' => $startTime && $endTime ? $startTime . ' - ' . $endTime : 'N/A',
-                    'reason' => $patient->reason,
-                    'admission_status' => $patient->admitted ? 'Admitted' : 'Not Admitted',
-                    'status' => $patient->status,
-                ];
-            });
+        $isOnDuty = $currentSchedule !== null;
 
-        // Example stats and timeline (replace with your actual logic)
-        $stats = [
-            [
-                'label' => 'Patients Today',
-                'value' => $patientsToday->count(),
-                'action' => 'View all',
-                'color' => 'bg-blue-50',
-                'text' => 'text-blue-600',
-            ],
-            // Add more stats if needed
-        ];
+        $patients = [];
+        $schedule = [];
+        $stats = [];
+        $notifications = [];
 
-        $timeline = [
-            ['time' => '8:00 AM', 'event' => 'Morning briefing'],
-            ['time' => '9:00 AM', 'event' => 'Patient: John Doe - Routine Checkup'],
-            ['time' => '10:30 AM', 'event' => 'Patient: Jane Smith - Follow-up'],
-        ];
+        // Fetch doctors and nurses for dropdowns (optional, if needed)
+        $doctors = User::where('role', 'doctor')->select('id', 'name')->get();
+        $nurses = User::where('role', 'nurse')->select('id', 'name')->get();
 
-        // Example: Assume doctor is on duty (adjust as needed)
-        $isOnDuty = true;
-        $currentSchedule = ['user' => ['name' => Auth::user()->name]];
+        if ($isOnDuty) {
+            // Fetch patients assigned to this doctor
+            $patients = Patient::where('doctor_id', $user->id)
+                ->get()
+                ->map(function ($patient) {
+                    $initials = $patient->initials;
+                    if (!$initials) {
+                        $names = explode(' ', $patient->name);
+                        $initials = '';
+                        foreach ($names as $n) {
+                            $initials .= strtoupper(substr($n, 0, 1));
+                        }
+                        $initials = substr($initials, 0, 4);
+                    }
+
+                    $idForQr = $patient->patient_code ?? $patient->id;
+
+                    $qrData = json_encode([
+                        'id' => $idForQr,
+                        'name' => $patient->name,
+                        'age' => $patient->age,
+                        'gender' => $patient->gender,
+                        'appointment_time' => optional($patient->appointment_start_time)->format('H:i') . ' - ' . optional($patient->appointment_end_time)->format('H:i'),
+                        'reason' => $patient->reason,
+                        'status' => $patient->status,
+                        'room' => $patient->room ?? '—',
+                        'admitted' => (bool) $patient->admitted,
+                    ]);
+
+                    return [
+                        'id' => $patient->id,
+                        'initials' => $initials,
+                        'name' => $patient->name,
+                        'patient_code' => $patient->patient_code,
+                        'age' => $patient->age,
+                        'gender' => $patient->gender,
+                        'appointment_time' => optional($patient->appointment_start_time)->format('h:i A') . ' - ' . optional($patient->appointment_end_time)->format('h:i A'),
+                        'reason' => $patient->reason,
+                        'status' => $patient->status,
+                        'statusColor' => $patient->status === 'Completed' ? 'green' : 'yellow',
+                        'room' => $patient->room ?? '—',
+                        'admitted' => (bool) $patient->admitted,
+                        'doctor_id' => $patient->doctor_id,
+                        'nurse_id' => $patient->nurse_id,
+                        'qrData' => $qrData,
+                    ];
+                })->toArray();
+
+            $patientsCollection = collect($patients);
+            $stats = [
+                ['label' => 'Patients Today', 'value' => count($patients), 'action' => 'View all', 'color' => 'bg-blue-50', 'text' => 'text-blue-600'],
+                ['label' => 'Completed Appointments', 'value' => $patientsCollection->where('status', 'Completed')->count(), 'action' => 'View details', 'color' => 'bg-green-50', 'text' => 'text-green-600'],
+                ['label' => 'Pending Appointments', 'value' => $patientsCollection->where('status', 'Upcoming')->count(), 'action' => 'View schedule', 'color' => 'bg-yellow-50', 'text' => 'text-yellow-600'],
+                ['label' => 'Critical Alerts', 'value' => 1, 'action' => 'View alerts', 'color' => 'bg-red-50', 'text' => 'text-red-600'],
+            ];
+
+            // Example notifications
+            $notifications = [
+                ['type' => 'alert', 'title' => 'Critical Alert', 'message' => "Patient Robert Johnson's blood pressure readings require immediate attention.", 'time' => '30 minutes ago'],
+                ['type' => 'lab', 'title' => 'Lab Results Available', 'message' => 'New lab results are available for Jane Smith.', 'time' => '2 hours ago'],
+                ['type' => 'med', 'title' => 'Medication Reminder', 'message' => 'Prescription renewal needed for Thomas Brown.', 'time' => '5 hours ago'],
+                ['type' => 'update', 'title' => 'Schedule Updated', 'message' => 'Your schedule for tomorrow has been updated.', 'time' => 'Yesterday'],
+            ];
+        }
 
         return Inertia::render('DoctorDashboard', [
-            'patientsToday' => $patientsToday,
+            'patients' => $patients,
+            'schedule' => $schedule,
             'stats' => $stats,
-            'timeline' => $timeline,
+            'notifications' => $notifications,
             'isOnDuty' => $isOnDuty,
             'currentSchedule' => $currentSchedule,
+            'doctors' => $doctors,
+            'nurses' => $nurses,
         ]);
+    }
+
+    public function storePatient(Request $request)
+    {
+        $validated = $request->validate([
+            'initials' => ['nullable', 'string', 'max:4'],
+            'name' => ['required', 'string', 'max:255'],
+            'patient_code' => ['required', 'string', 'max:255', 'unique:patients,patient_code'],
+            'age' => ['required', 'integer', 'min:0', 'max:255'],
+            'gender' => ['required', 'string', Rule::in(['Male', 'Female', 'Other'])],
+            'disease_categories' => ['nullable', 'json'],
+            'appointment_start_time' => ['nullable', 'date_format:H:i:s'],
+            'appointment_end_time' => ['nullable', 'date_format:H:i:s'],
+            'appointment_date' => ['nullable', 'date'],
+            'reason' => ['nullable', 'string', 'max:255'],
+            'status' => ['nullable', 'string', Rule::in(['Completed', 'Upcoming'])],
+            'room' => ['nullable', 'string', 'max:255'],
+            'admitted' => ['boolean'],
+            'admission_timestamp' => ['nullable', 'date'],
+            'discharge_timestamp' => ['nullable', 'date'],
+            'doctor_id' => ['nullable', 'exists:users,id'],
+            'nurse_id' => ['nullable', 'exists:users,id'],
+        ]);
+
+        if (empty($validated['initials'])) {
+            $names = explode(' ', $validated['name']);
+            $initials = '';
+            foreach ($names as $n) {
+                $initials .= strtoupper(substr($n, 0, 1));
+            }
+            $validated['initials'] = substr($initials, 0, 4);
+        }
+
+        if (empty($validated['status'])) {
+            $validated['status'] = 'Upcoming';
+        }
+
+        if (empty($validated['appointment_start_time'])) {
+            $validated['appointment_start_time'] = '09:00:00';
+        }
+        if (empty($validated['appointment_end_time'])) {
+            $validated['appointment_end_time'] = '09:30:00';
+        }
+
+        if (!empty($validated['admitted']) && empty($validated['admission_timestamp'])) {
+            $validated['admission_timestamp'] = Carbon::now();
+        }
+
+        $patient = Patient::create($validated);
+
+        return response()->json(['message' => 'Patient created successfully.', 'patient' => $patient], 201);
+    }
+
+    public function updatePatient(Request $request, Patient $patient)
+    {
+        $validated = $request->validate([
+            'initials' => ['nullable', 'string', 'max:4'],
+            'name' => ['required', 'string', 'max:255'],
+            'age' => ['required', 'integer', 'min:0', 'max:255'],
+            'gender' => ['required', 'string', Rule::in(['Male', 'Female', 'Other'])],
+            'reason' => ['nullable', 'string', 'max:255'],
+            'status' => ['nullable', 'string', Rule::in(['Completed', 'Upcoming'])],
+            'room' => ['nullable', 'string', 'max:255'],
+            'admitted' => ['boolean'],
+            'admission_timestamp' => ['nullable', 'date'],
+            'discharge_timestamp' => ['nullable', 'date'],
+            'doctor_id' => ['nullable', 'exists:users,id'],
+            'nurse_id' => ['nullable', 'exists:users,id'],
+            'disease_categories' => ['nullable', 'json'],
+            'appointment_start_time' => ['nullable', 'date_format:H:i:s'],
+            'appointment_end_time' => ['nullable', 'date_format:H:i:s'],
+            'appointment_date' => ['nullable', 'date'],
+        ]);
+
+        if (empty($validated['initials'])) {
+            $names = explode(' ', $validated['name']);
+            $initials = '';
+            foreach ($names as $n) {
+                $initials .= strtoupper(substr($n, 0, 1));
+            }
+            $validated['initials'] = substr($initials, 0, 4);
+        }
+
+        $patient->update($validated);
+
+        return response()->json(['message' => 'Patient updated successfully.', 'patient' => $patient]);
     }
 }
