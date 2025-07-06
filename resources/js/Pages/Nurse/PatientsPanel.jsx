@@ -2,7 +2,15 @@ import React, { useState } from 'react';
 import EditPatientModal from './EditPatientModal'; // Your existing edit modal
 import AddPatientModal from './AddPatientModal';   // Your add modal component
 
-export default function PatientsPanel({ patients, onUpdatePatient, isOnDuty, doctors = [], nurses = [] }) {
+export default function PatientsPanel({
+    patients,
+    onUpdatePatient,
+    onAddPatient,
+    onDeletePatient,
+    isOnDuty,
+    doctors = [],
+    nurses = []
+}) {
     const [editingPatient, setEditingPatient] = useState(null);
     const [addModalOpen, setAddModalOpen] = useState(false);
     const [newPatientForm, setNewPatientForm] = useState({
@@ -26,21 +34,6 @@ export default function PatientsPanel({ patients, onUpdatePatient, isOnDuty, doc
         return token ? token.getAttribute('content') : '';
     };
 
-    // Inside your PatientsPanel component, when rendering EditPatientModal:
-    {
-        editingPatient && (
-            <EditPatientModal
-                patient={editingPatient}
-                onClose={() => setEditingPatient(null)}
-                onSave={(updatedPatient) => {
-                    onUpdatePatient(updatedPatient);
-                    setEditingPatient(null);
-                }}
-            />
-        )
-    }
-
-
     // Generate unique patient code, e.g. P-YYYYMMDD-XXXX
     const generatePatientCode = () => {
         const datePart = new Date().toISOString().slice(0, 10).replace(/-/g, '');
@@ -48,6 +41,7 @@ export default function PatientsPanel({ patients, onUpdatePatient, isOnDuty, doc
         return `P-${datePart}-${randomPart}`;
     };
 
+    // Open Add Modal and initialize form
     const openAddModal = () => {
         setNewPatientForm({
             name: '',
@@ -70,6 +64,7 @@ export default function PatientsPanel({ patients, onUpdatePatient, isOnDuty, doc
         setFormErrors({});
     };
 
+    // Handle form input changes for new patient
     const handleNewPatientChange = (e) => {
         const { name, value, type, checked } = e.target;
         setNewPatientForm(prev => ({
@@ -78,6 +73,7 @@ export default function PatientsPanel({ patients, onUpdatePatient, isOnDuty, doc
         }));
     };
 
+    // Submit new patient form with live update
     const handleAddPatientSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -98,8 +94,8 @@ export default function PatientsPanel({ patients, onUpdatePatient, isOnDuty, doc
 
             if (response.ok) {
                 alert('Patient added successfully!');
+                onAddPatient(data.patient || data); // Update parent state live
                 closeAddModal();
-                window.location.reload(); // Refresh to show new patient
             } else if (response.status === 422) {
                 setFormErrors(data.errors || {});
             } else {
@@ -110,6 +106,32 @@ export default function PatientsPanel({ patients, onUpdatePatient, isOnDuty, doc
             alert('Network error: Could not connect to the server.');
         } finally {
             setLoading(false);
+        }
+    };
+
+    // Delete patient with confirmation and live update
+    const handleDeletePatientClick = async (patientId) => {
+        if (!window.confirm('Are you sure you want to delete this patient?')) return;
+
+        try {
+            const response = await fetch(`/nurse/patients/${patientId}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': getCsrfToken(),
+                    'Accept': 'application/json',
+                },
+            });
+
+            if (response.ok) {
+                alert('Patient deleted successfully!');
+                onDeletePatient(patientId); // Update parent state live
+            } else {
+                const data = await response.json();
+                alert(data.message || 'Failed to delete patient.');
+            }
+        } catch (error) {
+            console.error('Network error:', error);
+            alert('Network error: Could not connect to the server.');
         }
     };
 
@@ -130,7 +152,6 @@ export default function PatientsPanel({ patients, onUpdatePatient, isOnDuty, doc
             <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-2">
                 <h3 className="font-semibold text-lg md:text-xl text-blue-700">Today's Patients</h3>
                 <div className="flex gap-2">
-                    {/* <button className="px-3 py-1 bg-gray-100 rounded text-black hover:bg-gray-200 transition">Filter</button> */}
                     <button
                         onClick={openAddModal}
                         className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
@@ -178,10 +199,10 @@ export default function PatientsPanel({ patients, onUpdatePatient, isOnDuty, doc
                         <div className="flex items-center space-x-2 mt-2 md:mt-0">
                             <span
                                 className={`text-xs font-semibold rounded px-2 py-1 ${p.statusColor === 'green'
-                                    ? 'bg-green-100 text-green-700'
-                                    : p.statusColor === 'yellow'
-                                        ? 'bg-yellow-100 text-yellow-700'
-                                        : 'bg-blue-100 text-blue-700'
+                                        ? 'bg-green-100 text-green-700'
+                                        : p.statusColor === 'yellow'
+                                            ? 'bg-yellow-100 text-yellow-700'
+                                            : 'bg-blue-100 text-blue-700'
                                     }`}
                             >
                                 {p.status}
@@ -194,22 +215,32 @@ export default function PatientsPanel({ patients, onUpdatePatient, isOnDuty, doc
                             >
                                 Edit
                             </button>
+                            <button
+                                onClick={() => handleDeletePatientClick(p.id)}
+                                className="ml-2 p-1 rounded hover:bg-red-50 text-red-600"
+                                title="Delete Patient"
+                                aria-label={`Delete patient ${p.name}`}
+                            >
+                                Delete
+                            </button>
                         </div>
                     </div>
                 ))}
             </div>
 
+            {/* Edit Patient Modal */}
             {editingPatient && (
                 <EditPatientModal
                     patient={editingPatient}
                     onClose={() => setEditingPatient(null)}
-                    onSave={updatedPatient => {
+                    onSave={(updatedPatient) => {
                         onUpdatePatient(updatedPatient);
                         setEditingPatient(null);
                     }}
                 />
             )}
 
+            {/* Add Patient Modal */}
             <AddPatientModal
                 open={addModalOpen}
                 onClose={closeAddModal}
