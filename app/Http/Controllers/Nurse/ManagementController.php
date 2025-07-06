@@ -182,9 +182,12 @@ class ManagementController extends Controller
             'discharge_timestamp' => ['nullable', 'date'],
             'doctor_id' => ['nullable', 'exists:users,id'],
             'nurse_id' => ['nullable', 'exists:users,id'],
+            'disease_categories' => ['nullable', 'json'],
+            'appointment_start_time' => ['nullable', 'date_format:H:i:s'],
+            'appointment_end_time' => ['nullable', 'date_format:H:i:s'],
+            'appointment_date' => ['nullable', 'date'],
         ]);
 
-        // Generate initials if missing
         if (empty($validated['initials'])) {
             $names = explode(' ', $validated['name']);
             $initials = '';
@@ -198,4 +201,5 @@ class ManagementController extends Controller
 
         return response()->json(['message' => 'Patient updated successfully.', 'patient' => $patient]);
     }
+
 }

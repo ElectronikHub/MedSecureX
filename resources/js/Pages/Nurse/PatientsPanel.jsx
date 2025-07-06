@@ -26,6 +26,21 @@ export default function PatientsPanel({ patients, onUpdatePatient, isOnDuty, doc
         return token ? token.getAttribute('content') : '';
     };
 
+    // Inside your PatientsPanel component, when rendering EditPatientModal:
+    {
+        editingPatient && (
+            <EditPatientModal
+                patient={editingPatient}
+                onClose={() => setEditingPatient(null)}
+                onSave={(updatedPatient) => {
+                    onUpdatePatient(updatedPatient);
+                    setEditingPatient(null);
+                }}
+            />
+        )
+    }
+
+
     // Generate unique patient code, e.g. P-YYYYMMDD-XXXX
     const generatePatientCode = () => {
         const datePart = new Date().toISOString().slice(0, 10).replace(/-/g, '');
