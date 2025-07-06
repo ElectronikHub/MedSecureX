@@ -61,7 +61,7 @@ Route::middleware(['auth'])->group(function () {
         // Patient management for nurse
         Route::post('/patients', [NurseManagement::class, 'storePatient'])->name('patients.store');
         Route::put('/patients/{patient}', [NurseManagement::class, 'updatePatient'])->name('patients.update');
-        Route::delete('/nurse/patients/{patient}', [NurseManagement::class, 'deletePatient'])->name('patients.delete');
+        Route::delete('/patients/{patient}', [NurseManagement::class, 'deletePatient'])->name('patients.delete');
     });
 
     // Doctor routes
