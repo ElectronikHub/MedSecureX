@@ -1,75 +1,66 @@
-// resources/js/Components/Admin/EditScheduleModal.jsx
-import React, { useState } from "react";
+import React, { useState } from 'react';
+import EditScheduleModal from '@/Components/Admin/EditScheduleModal';
 
-export default function EditScheduleModal({ schedule, onClose, onSave }) {
-  const [form, setForm] = useState({
-    shift_date: schedule.shift_date,
-    start_time: schedule.start_time,
-    end_time: schedule.end_time,
-  });
+export default function ScheduleManager() {
+    const [showModal, setShowModal] = useState(false);
+    const [selectedSchedule, setSelectedSchedule] = useState(null);
+    const [schedules, setSchedules] = useState([]); // Your schedule list
 
-  const handleChange = e => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+    // Function to open modal with selected schedule
+    const openEditModal = (schedule) => {
+        setSelectedSchedule(schedule);
+        setShowModal(true);
+    };
 
-  const handleSubmit = e => {
-    e.preventDefault();
-    onSave(schedule.id, form);
-  };
+    // Function to update schedule via API
+    const handleSave = async (scheduleId, formData) => {
+        try {
+            const response = await fetch(`/admin/schedules/${scheduleId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    Accept: 'application/json',
+                },
+                body: JSON.stringify(formData),
+            });
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
-        <h3 className="text-lg font-bold mb-4">Edit Schedule</h3>
-        <form onSubmit={handleSubmit}>
-          <div className="mb-2">
-            <label className="block text-sm font-medium">Shift Date</label>
-            <input
-              type="date"
-              name="shift_date"
-              value={form.shift_date}
-              onChange={handleChange}
-              className="w-full border rounded p-2"
-            />
-          </div>
-          <div className="mb-2">
-            <label className="block text-sm font-medium">Start Time</label>
-            <input
-              type="time"
-              name="start_time"
-              value={form.start_time}
-              onChange={handleChange}
-              className="w-full border rounded p-2"
-            />
-          </div>
-          <div className="mb-4">
-            <label className="block text-sm font-medium">End Time</label>
-            <input
-              type="time"
-              name="end_time"
-              value={form.end_time}
-              onChange={handleChange}
-              className="w-full border rounded p-2"
-            />
-          </div>
-          <div className="flex justify-end gap-2">
-            <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-300 rounded">
-              Cancel
-            </button>
-            <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded">
-              Save
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to update schedule');
+            }
+
+            const data = await response.json();
+
+            // Update schedules state with updated schedule
+            setSchedules((prev) =>
+                prev.map((sch) => (sch.id === scheduleId ? data.schedule : sch))
+            );
+
+            alert(data.message);
+            setShowModal(false);
+        } catch (error) {
+            alert(error.message);
+        }
+    };
+
+    return (
+        <div>
+            {/* Your schedule list and edit buttons */}
+            {schedules.map((schedule) => (
+                <div key={schedule.id}>
+                    <span>{schedule.user_name} - {schedule.shift_date}</span>
+                    <button onClick={() => openEditModal(schedule)}>Edit</button>
+                </div>
+            ))}
+
+            {showModal && selectedSchedule && (
+                <EditScheduleModal
+                    schedule={selectedSchedule}
+                    onClose={() => setShowModal(false)}
+                    onSave={handleSave}
+                />
+            )}
+        </div>
+    );
 }
-
-// It displays a popup modal allowing an admin to edit a staff member’s schedule (date, start time, end time).
-
-// The modal shows a form pre-filled with the current schedule.
-
-// When the user clicks "Save," it calls the onSave function with the updated info.
-
-// When the user clicks "Cancel," it closes the modal without saving.

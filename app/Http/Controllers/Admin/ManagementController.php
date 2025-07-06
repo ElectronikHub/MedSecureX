@@ -133,4 +133,30 @@ class ManagementController extends Controller
 
         return redirect()->route('admin.dashboard')->with('success', 'Staff created successfully.');
     }
+
+    /**
+     * Update existing schedule or create a new one.
+     * If $id is provided, update the schedule; else create new.
+     */
+    public function updateOrCreateSchedule(Request $request, $id = null)
+    {
+        $validated = $request->validate([
+            'user_id' => ['required', 'exists:users,id'],
+            'shift_date' => ['required', 'date'],
+            'start_time' => ['required', 'date_format:H:i'],
+            'end_time' => ['required', 'date_format:H:i', 'after:start_time'],
+        ]);
+
+        if ($id) {
+            $schedule = Schedule::findOrFail($id);
+            $schedule->update($validated);
+        } else {
+            $schedule = Schedule::create($validated);
+        }
+
+        return response()->json([
+            'message' => $id ? 'Schedule updated successfully.' : 'Schedule created successfully.',
+            'schedule' => $schedule,
+        ]);
+    }
 }

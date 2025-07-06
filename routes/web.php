@@ -43,6 +43,10 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/admin/users/{user}/role', [AdminManagement::class, 'updateUserRole'])->name('admin.users.updateRole');
     Route::post('/admin/users', [AdminManagement::class, 'storeStaff'])->name('admin.users.storeStaff');
 
+    // Schedule routes added here:
+    Route::put('/admin/schedules/{schedule}', [AdminManagement::class, 'updateOrCreateSchedule'])->name('admin.schedules.update');
+    Route::post('/admin/schedules', [AdminManagement::class, 'updateOrCreateSchedule'])->name('admin.schedules.store');
+
     Route::get('/nurse/dashboard', [NurseManagement::class, 'dashboard'])->name('nurse.dashboard');
 
     // Add patient creation route (POST)
