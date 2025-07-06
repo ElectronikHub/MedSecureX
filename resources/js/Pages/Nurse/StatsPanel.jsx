@@ -7,7 +7,7 @@ export default function StatsPanel({ stats }) {
         <div key={idx} className={`rounded-lg p-4 shadow ${stat.color}`}>
           <div className={`text-2xl font-bold ${stat.text}`}>{stat.value}</div>
           <div className="text-gray-600">{stat.label}</div>
-          <button className="mt-2 text-blue-600 underline text-sm">{stat.action}</button>
+          {/* <button className="mt-2 text-blue-600 underline text-sm">{stat.action}</button> */}
         </div>
       ))}
     </div>
