@@ -137,6 +137,10 @@ class ManagementController extends Controller
     /**
      * Update existing schedule or create a new one.
      * If $id is provided, update the schedule; else create new.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int|null  $id
+     * @return \Illuminate\Http\JsonResponse
      */
     public function updateOrCreateSchedule(Request $request, $id = null)
     {

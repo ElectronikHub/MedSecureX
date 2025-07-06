@@ -5,6 +5,7 @@ export default function EditScheduleModal({ schedule, onClose, onSave }) {
         shift_date: schedule.shift_date,
         start_time: schedule.start_time,
         end_time: schedule.end_time,
+        user_id: schedule.user_id, // include user_id for backend validation
     });
 
     const handleChange = e => {
@@ -29,6 +30,7 @@ export default function EditScheduleModal({ schedule, onClose, onSave }) {
                             value={form.shift_date}
                             onChange={handleChange}
                             className="w-full border rounded p-2"
+                            required
                         />
                     </div>
                     <div className="mb-2">
@@ -39,6 +41,7 @@ export default function EditScheduleModal({ schedule, onClose, onSave }) {
                             value={form.start_time}
                             onChange={handleChange}
                             className="w-full border rounded p-2"
+                            required
                         />
                     </div>
                     <div className="mb-4">
@@ -49,13 +52,32 @@ export default function EditScheduleModal({ schedule, onClose, onSave }) {
                             value={form.end_time}
                             onChange={handleChange}
                             className="w-full border rounded p-2"
+                            required
+                        />
+                    </div>
+                    {/* Optionally display user info (readonly) */}
+                    <div className="mb-4">
+                        <label className="block text-sm font-medium">Assigned User ID</label>
+                        <input
+                            type="text"
+                            name="user_id"
+                            value={form.user_id}
+                            readOnly
+                            className="w-full border rounded p-2 bg-gray-100 cursor-not-allowed"
                         />
                     </div>
                     <div className="flex justify-end gap-2">
-                        <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-300 rounded">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="px-4 py-2 bg-gray-300 rounded"
+                        >
                             Cancel
                         </button>
-                        <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded">
+                        <button
+                            type="submit"
+                            className="px-4 py-2 bg-blue-600 text-white rounded"
+                        >
                             Save
                         </button>
                     </div>

@@ -67,4 +67,11 @@ Route::get('/api/patients/{id}', function ($id) {
     return response()->json($patient);
 });
 
+// Update existing schedule
+Route::put('/admin/schedules/{schedule}', [AdminManagement::class, 'updateOrCreateSchedule'])->name('admin.schedules.update');
+
+// Create new schedule (optional)
+Route::post('/admin/schedules', [AdminManagement::class, 'updateOrCreateSchedule'])->name('admin.schedules.store');
+
+
 require __DIR__ . '/auth.php';
