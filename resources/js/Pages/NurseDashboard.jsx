@@ -52,7 +52,7 @@ export default function NurseDashboard({ patients: initialPatients, schedule, st
                         />
                     </div>
                     <div className="space-y-6">
-                        <SchedulePanel schedule={schedule} onMarkCompleted={handleMarkCompleted} />
+                        {/* <SchedulePanel schedule={schedule} onMarkCompleted={handleMarkCompleted} /> */}
                         <NotificationsPanel notifications={notifications} />
                     </div>
                 </div>
