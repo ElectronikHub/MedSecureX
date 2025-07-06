@@ -31,31 +31,44 @@ Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-// Profile routes
+// Profile routes (authenticated users)
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-// Role-based dashboards & user management
+// Role-based dashboards & user management routes (authenticated users)
 Route::middleware(['auth'])->group(function () {
-    Route::get('/admin/dashboard', [AdminManagement::class, 'dashboard'])->name('admin.dashboard');
 
-    Route::put('/admin/users/{user}/role', [AdminManagement::class, 'updateUserRole'])->name('admin.users.updateRole');
-    Route::post('/admin/users', [AdminManagement::class, 'storeStaff'])->name('admin.users.storeStaff');
+    // Admin routes
+    Route::prefix('admin')->name('admin.')->group(function () {
+        Route::get('/dashboard', [AdminManagement::class, 'dashboard'])->name('dashboard');
 
-    // Schedule routes
-    Route::put('/admin/schedules/{schedule}', [AdminManagement::class, 'updateOrCreateSchedule'])->name('admin.schedules.update');
-    Route::post('/admin/schedules', [AdminManagement::class, 'updateOrCreateSchedule'])->name('admin.schedules.store');
+        // User role management
+        Route::put('/users/{user}/role', [AdminManagement::class, 'updateUserRole'])->name('users.updateRole');
+        Route::post('/users', [AdminManagement::class, 'storeStaff'])->name('users.storeStaff');
 
-    Route::get('/nurse/dashboard', [NurseManagement::class, 'dashboard'])->name('nurse.dashboard');
+        // Schedule management
+        Route::put('/schedules/{schedule}', [AdminManagement::class, 'updateOrCreateSchedule'])->name('schedules.update');
+        Route::post('/schedules', [AdminManagement::class, 'updateOrCreateSchedule'])->name('schedules.store');
+    });
 
-    // Patient routes for nurse
-    Route::post('/nurse/patients', [NurseManagement::class, 'storePatient'])->name('nurse.patients.store');
-    Route::put('/nurse/patients/{patient}', [NurseManagement::class, 'updatePatient'])->name('nurse.patients.update');
+    // Nurse routes
+    Route::prefix('nurse')->name('nurse.')->group(function () {
+        Route::get('/dashboard', [NurseManagement::class, 'dashboard'])->name('dashboard');
 
-    Route::get('/doctor/dashboard', [DoctorManagement::class, 'dashboard'])->name('doctor.dashboard');
+        // Patient management for nurse
+        Route::post('/patients', [NurseManagement::class, 'storePatient'])->name('patients.store');
+        Route::put('/patients/{patient}', [NurseManagement::class, 'updatePatient'])->name('patients.update');
+        Route::delete('/patients/{patient}', [NurseManagement::class, 'deletePatient'])->name('patients.delete');
+    });
+
+    // Doctor routes
+    Route::prefix('doctor')->name('doctor.')->group(function () {
+        Route::get('/dashboard', [DoctorManagement::class, 'dashboard'])->name('dashboard');
+        // Add doctor-specific routes here as needed
+    });
 
     // API route for patient info by patient_code (query param)
     Route::get('/api/patients', function (Request $request) {
@@ -75,7 +88,7 @@ Route::middleware(['auth'])->group(function () {
     })->name('api.patients.byCode');
 });
 
-// API route for patient info by ID (legacy)
+// Legacy API route for patient info by ID
 Route::get('/api/patients/{id}', function ($id) {
     $patient = Patient::find($id);
     if (!$patient) {

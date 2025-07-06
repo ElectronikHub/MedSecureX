@@ -17,7 +17,6 @@ export default function AddPatientModal({ open, onClose, doctors, nurses, onAddP
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
 
-    // Generate unique patient code and set default doctor/nurse on open
     useEffect(() => {
         if (open) {
             const datePart = new Date().toISOString().slice(0, 10).replace(/-/g, '');
@@ -42,7 +41,7 @@ export default function AddPatientModal({ open, onClose, doctors, nurses, onAddP
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
-        setForm((prev) => ({
+        setForm(prev => ({
             ...prev,
             [name]: type === 'checkbox' ? checked : value,
         }));
@@ -53,8 +52,10 @@ export default function AddPatientModal({ open, onClose, doctors, nurses, onAddP
         setLoading(true);
         setErrors({});
 
+        console.log('Submitting patient:', form); // Debug payload
+
         try {
-            const response = await fetch('/nurse/patients', {
+            const response = await fetch('/patients', { // Adjust URL to your route
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -68,14 +69,14 @@ export default function AddPatientModal({ open, onClose, doctors, nurses, onAddP
 
             if (response.ok) {
                 alert('Patient added successfully!');
-                onAddPatient(data.patient || data);
+                onAddPatient(data.patient);
                 onClose();
             } else if (response.status === 422) {
                 setErrors(data.errors || {});
             } else {
                 alert(data.message || 'An error occurred.');
             }
-        } catch (err) {
+        } catch (error) {
             alert('Network error.');
         } finally {
             setLoading(false);
@@ -170,7 +171,6 @@ export default function AddPatientModal({ open, onClose, doctors, nurses, onAddP
                     Admitted
                 </label>
 
-                {/* Doctor select */}
                 <label className="block font-semibold">Assign Doctor</label>
                 <select
                     name="doctor_id"
@@ -188,7 +188,6 @@ export default function AddPatientModal({ open, onClose, doctors, nurses, onAddP
                 </select>
                 {errors.doctor_id && <p className="text-red-600 text-sm">{errors.doctor_id}</p>}
 
-                {/* Nurse select */}
                 <label className="block font-semibold">Assign Nurse</label>
                 <select
                     name="nurse_id"
