@@ -29,6 +29,7 @@ class ManagementController extends Controller
 
         $patientsToday = collect();
         $admittedPatients = collect();
+        $allPatients = collect(); // New: all patients assigned to doctor
         $stats = [];
         $timeline = [];
 
@@ -62,6 +63,29 @@ class ManagementController extends Controller
                         'reason' => $patient->reason,
                         'admitted' => true,
                         'admission_status' => 'Admitted',
+                    ];
+                });
+
+            // New: Fetch all patients assigned to this doctor (no admission or date filter)
+            $allPatients = Patient::where('doctor_id', $doctorId)
+                ->get()
+                ->map(function ($patient) {
+                    return [
+                        'id' => $patient->id,
+                        'name' => $patient->name,
+                        'patient_code' => $patient->patient_code,
+                        'age' => $patient->age,
+                        'gender' => $patient->gender,
+                        'disease_categories' => $patient->disease_categories,
+                        'appointment_start_time' => $patient->appointment_start_time ? $patient->appointment_start_time->format('h:i A') : null,
+                        'appointment_end_time' => $patient->appointment_end_time ? $patient->appointment_end_time->format('h:i A') : null,
+                        'appointment_date' => $patient->appointment_date ? $patient->appointment_date->format('M d, Y') : null,
+                        'reason' => $patient->reason,
+                        'status' => $patient->status,
+                        'room' => $patient->room,
+                        'admitted' => $patient->admitted,
+                        'admission_timestamp' => $patient->admission_timestamp ? $patient->admission_timestamp->format('M d, Y h:i A') : null,
+                        'discharge_timestamp' => $patient->discharge_timestamp ? $patient->discharge_timestamp->format('M d, Y h:i A') : null,
                     ];
                 });
 
@@ -101,11 +125,13 @@ class ManagementController extends Controller
         return Inertia::render('DoctorDashboard', [
             'patientsToday' => $patientsToday,
             'admittedPatients' => $admittedPatients,
+            'allPatients' => $allPatients, // Pass all patients to frontend
             'stats' => $stats,
             'timeline' => $timeline,
             'isOnDuty' => $isOnDuty,
             'currentSchedule' => $currentSchedule,
         ]);
     }
+
 
 }

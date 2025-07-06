@@ -57,19 +57,18 @@ Route::middleware(['auth'])->group(function () {
     // Nurse routes
     Route::prefix('nurse')->name('nurse.')->group(function () {
         Route::get('/dashboard', [NurseManagement::class, 'dashboard'])->name('dashboard');
-    });
 
-    Route::prefix('nurse')->name('nurse.')->middleware('auth')->group(function () {
         Route::post('/patients', [NurseManagement::class, 'storePatient'])->name('patients.store');
         Route::put('/patients/{patient}', [NurseManagement::class, 'updatePatient'])->name('patients.update');
         Route::delete('/patients/{patient}', [NurseManagement::class, 'deletePatient'])->name('patients.delete');
     });
 
-
     // Doctor routes
     Route::prefix('doctor')->name('doctor.')->group(function () {
         Route::get('/dashboard', [DoctorManagement::class, 'dashboard'])->name('dashboard');
-        // Add doctor-specific routes here as needed
+
+        // Route to show all patients assigned to the logged-in doctor
+        Route::get('/all-patients', [DoctorManagement::class, 'allPatients'])->name('patients.all');
     });
 
     // API route for patient info by patient_code (query param)
