@@ -17,7 +17,6 @@ class ManagementController extends Controller
 
         // Fetch patients scheduled for today assigned to this doctor
         $patientsToday = Patient::where('doctor_id', $doctorId)
-            ->whereDate('appointment_date', $today)
             ->get()
             ->map(function ($patient) {
                 $startTime = $patient->appointment_start_time
