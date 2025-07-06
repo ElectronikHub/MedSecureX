@@ -103,6 +103,129 @@ class ManagementController extends Controller
         ]);
     }
 
+    /**
+     * List patients (optional, for API or Inertia)
+     */
+    public function patients()
+    {
+        $patients = Patient::with(['doctor', 'nurse'])->get();
+
+        return response()->json($patients);
+    }
+
+    /**
+     * Store a new patient
+     */
+    public function storePatient(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'patient_code' => ['required', 'string', 'max:255', 'unique:patients,patient_code'],
+            'age' => ['required', 'integer', 'min:0'],
+            'gender' => ['required', Rule::in(['Male', 'Female', 'Other'])],
+            'disease_categories' => ['nullable', 'json'],
+            'appointment_start_time' => ['nullable', 'date_format:H:i'],
+            'appointment_end_time' => ['nullable', 'date_format:H:i'],
+            'appointment_date' => ['nullable', 'date'],
+            'reason' => ['nullable', 'string'],
+            'status' => ['nullable', Rule::in(['Completed', 'Upcoming'])],
+            'room' => ['nullable', 'string'],
+            'admitted' => ['boolean'],
+            'admission_timestamp' => ['nullable', 'date'],
+            'discharge_timestamp' => ['nullable', 'date'],
+            'doctor_id' => [
+                'nullable',
+                'exists:users,id',
+                function ($attribute, $value, $fail) {
+                    $user = User::find($value);
+                    if ($user && $user->role !== 'doctor') {
+                        $fail('Selected doctor is not valid.');
+                    }
+                },
+            ],
+            'nurse_id' => [
+                'nullable',
+                'exists:users,id',
+                function ($attribute, $value, $fail) {
+                    $user = User::find($value);
+                    if ($user && $user->role !== 'nurse') {
+                        $fail('Selected nurse is not valid.');
+                    }
+                },
+            ],
+        ]);
+
+        $patient = Patient::create($validated);
+
+        return response()->json([
+            'message' => 'Patient created successfully.',
+            'patient' => $patient,
+        ], 201);
+    }
+
+    /**
+     * Update existing patient
+     */
+    public function updatePatient(Request $request, Patient $patient)
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'patient_code' => ['required', 'string', 'max:255', Rule::unique('patients', 'patient_code')->ignore($patient->id)],
+            'age' => ['required', 'integer', 'min:0'],
+            'gender' => ['required', Rule::in(['Male', 'Female', 'Other'])],
+            'disease_categories' => ['nullable', 'json'],
+            'appointment_start_time' => ['nullable', 'date_format:H:i'],
+            'appointment_end_time' => ['nullable', 'date_format:H:i'],
+            'appointment_date' => ['nullable', 'date'],
+            'reason' => ['nullable', 'string'],
+            'status' => ['nullable', Rule::in(['Completed', 'Upcoming'])],
+            'room' => ['nullable', 'string'],
+            'admitted' => ['boolean'],
+            'admission_timestamp' => ['nullable', 'date'],
+            'discharge_timestamp' => ['nullable', 'date'],
+            'doctor_id' => [
+                'nullable',
+                'exists:users,id',
+                function ($attribute, $value, $fail) {
+                    $user = User::find($value);
+                    if ($user && $user->role !== 'doctor') {
+                        $fail('Selected doctor is not valid.');
+                    }
+                },
+            ],
+            'nurse_id' => [
+                'nullable',
+                'exists:users,id',
+                function ($attribute, $value, $fail) {
+                    $user = User::find($value);
+                    if ($user && $user->role !== 'nurse') {
+                        $fail('Selected nurse is not valid.');
+                    }
+                },
+            ],
+        ]);
+
+        $patient->update($validated);
+
+        return response()->json([
+            'message' => 'Patient updated successfully.',
+            'patient' => $patient,
+        ]);
+    }
+
+    /**
+     * Delete patient
+     */
+    public function deletePatient(Patient $patient)
+    {
+        $patient->delete();
+
+        return response()->json(['message' => 'Patient deleted successfully.']);
+    }
+
+    /**
+     * Update user role and status
+     */
     public function updateUserRole(Request $request, User $user)
     {
         $request->validate([
@@ -117,6 +240,9 @@ class ManagementController extends Controller
         return response()->json(['message' => 'User updated successfully']);
     }
 
+    /**
+     * Store new staff user
+     */
     public function storeStaff(Request $request)
     {
         $validated = $request->validate([
@@ -139,6 +265,9 @@ class ManagementController extends Controller
         ], 201);
     }
 
+    /**
+     * Create or update schedule
+     */
     public function updateOrCreateSchedule(Request $request, $id = null)
     {
         $validated = $request->validate([

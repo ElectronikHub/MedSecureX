@@ -17,17 +17,23 @@ export default function AddPatientModal({ open, onClose, doctors, nurses, onAddP
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
 
-    // Generate patient code on mount
+    // Generate unique patient code and set default doctor/nurse on open
     useEffect(() => {
         if (open) {
             const datePart = new Date().toISOString().slice(0, 10).replace(/-/g, '');
             const randomPart = Math.floor(1000 + Math.random() * 9000);
-            setForm((f) => ({
-                ...f,
+            setForm({
+                name: '',
                 patient_code: `P-${datePart}-${randomPart}`,
+                age: '',
+                gender: '',
+                room: '',
+                reason: '',
+                appointment_date: new Date().toISOString().slice(0, 10),
+                admitted: false,
                 doctor_id: doctors.length > 0 ? doctors[0].id : '',
                 nurse_id: nurses.length > 0 ? nurses[0].id : '',
-            }));
+            });
             setErrors({});
         }
     }, [open, doctors, nurses]);
