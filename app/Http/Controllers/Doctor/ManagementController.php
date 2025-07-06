@@ -27,15 +27,13 @@ class ManagementController extends Controller
 
         $isOnDuty = $currentSchedule !== null;
 
-        $patientsToday = collect();
-        $admittedPatients = collect();
+        $patients = collect();
         $stats = [];
         $timeline = [];
 
         if ($isOnDuty) {
-            // Fetch admitted patients assigned to this doctor (regardless of appointment_date)
-            $admittedPatients = Patient::where('doctor_id', $doctorId)
-                ->where('admitted', true)
+            // Fetch all patients assigned to this doctor (no admission filter)
+            $patients = Patient::where('doctor_id', $doctorId)
                 ->get()
                 ->map(function ($patient) {
                     return [
@@ -44,68 +42,23 @@ class ManagementController extends Controller
                         'room' => $patient->room,
                         'admission_timestamp' => $patient->admission_timestamp ? $patient->admission_timestamp->format('M d, Y h:i A') : null,
                         'reason' => $patient->reason,
-                    ];
-                });
-
-            // Existing patientsToday and stats logic here if needed
-            $patientsToday = Patient::where('doctor_id', $doctorId)
-                ->where('admitted', true)
-                ->whereDate('appointment_date', $today)
-                ->get()
-                ->map(function ($patient) {
-                    return [
-                        'id' => $patient->id,
-                        'name' => $patient->name,
+                        'admitted' => $patient->admitted,
                         'status' => $patient->status,
-                        'appointment_time' => optional($patient->appointment_start_time)->format('h:i A')
-                            . ' - ' . optional($patient->appointment_end_time)->format('h:i A'),
-                        'reason' => $patient->reason,
-                        'admitted' => true,
-                        'admission_status' => 'Admitted',
+                        'appointment_date' => $patient->appointment_date ? $patient->appointment_date->format('M d, Y') : null,
                     ];
                 });
 
-            // Calculate stats dynamically
-            $stats = [
-                [
-                    'label' => 'Patients Today',
-                    'value' => $patientsToday->count(),
-                    'action' => 'View all',
-                    'color' => 'bg-blue-50',
-                    'text' => 'text-blue-600',
-                ],
-                [
-                    'label' => 'Completed Appointments',
-                    'value' => $patientsToday->where('status', 'Completed')->count(),
-                    'action' => 'View details',
-                    'color' => 'bg-green-50',
-                    'text' => 'text-green-600',
-                ],
-                [
-                    'label' => 'Upcoming Appointments',
-                    'value' => $patientsToday->where('status', 'Upcoming')->count(),
-                    'action' => 'View schedule',
-                    'color' => 'bg-yellow-50',
-                    'text' => 'text-yellow-600',
-                ],
-            ];
-
-            // Example timeline events (you can customize or fetch real data)
-            $timeline = [
-                ['time' => '8:00 AM', 'event' => 'Morning briefing'],
-                ['time' => '9:00 AM', 'event' => 'Patient: John Doe - Routine Checkup'],
-                ['time' => '10:30 AM', 'event' => 'Patient: Jane Smith - Follow-up'],
-            ];
+            // You can keep your stats and timeline logic here if needed
         }
 
         return Inertia::render('DoctorDashboard', [
-            'patientsToday' => $patientsToday,
-            'admittedPatients' => $admittedPatients,
+            'patients' => $patients,
             'stats' => $stats,
             'timeline' => $timeline,
             'isOnDuty' => $isOnDuty,
             'currentSchedule' => $currentSchedule,
         ]);
     }
+
 
 }
