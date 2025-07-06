@@ -116,25 +116,24 @@ class ManagementController extends Controller
     public function storePatient(Request $request)
     {
         $validated = $request->validate([
+            'initials' => ['nullable', 'string', 'max:4'], // optional, max 4 chars
             'name' => ['required', 'string', 'max:255'],
             'patient_code' => ['required', 'string', 'max:255', 'unique:patients,patient_code'],
-            'age' => ['required', 'integer', 'min:0'],
+            'age' => ['required', 'integer', 'min:0', 'max:255'], // unsignedTinyInteger max 255
             'gender' => ['required', 'string', Rule::in(['Male', 'Female', 'Other'])],
+            'disease_categories' => ['nullable', 'json'],
+            'appointment_start_time' => ['nullable', 'date_format:H:i:s'],
+            'appointment_end_time' => ['nullable', 'date_format:H:i:s'],
+            'appointment_date' => ['nullable', 'date'],
+            'reason' => ['nullable', 'string', 'max:255'], // string default length 255
+            'status' => ['nullable', 'string', Rule::in(['Completed', 'Upcoming'])],
             'room' => ['nullable', 'string', 'max:255'],
-            'reason' => ['nullable', 'string', 'max:500'],
-            'appointment_date' => ['required', 'date'],
             'admitted' => ['boolean'],
+            'admission_timestamp' => ['nullable', 'date'],
+            'discharge_timestamp' => ['nullable', 'date'],
             'doctor_id' => ['nullable', 'exists:users,id'],
             'nurse_id' => ['nullable', 'exists:users,id'],
         ]);
-
-        // Default appointment times (can be extended to accept from request)
-        $validated['appointment_start_time'] = '09:00:00';
-        $validated['appointment_end_time'] = '09:30:00';
-
-        if ($validated['admitted']) {
-            $validated['admission_timestamp'] = Carbon::now();
-        }
 
         // Generate initials if missing
         if (empty($validated['initials'])) {
@@ -143,7 +142,24 @@ class ManagementController extends Controller
             foreach ($names as $n) {
                 $initials .= strtoupper(substr($n, 0, 1));
             }
-            $validated['initials'] = $initials;
+            $validated['initials'] = substr($initials, 0, 4); // max 4 chars
+        }
+
+        // Set default status if not provided
+        if (empty($validated['status'])) {
+            $validated['status'] = 'Upcoming';
+        }
+
+        // Set default appointment times if missing
+        if (empty($validated['appointment_start_time'])) {
+            $validated['appointment_start_time'] = '09:00:00';
+        }
+        if (empty($validated['appointment_end_time'])) {
+            $validated['appointment_end_time'] = '09:30:00';
+        }
+
+        if (!empty($validated['admitted']) && empty($validated['admission_timestamp'])) {
+            $validated['admission_timestamp'] = Carbon::now();
         }
 
         $patient = Patient::create($validated);
@@ -154,18 +170,36 @@ class ManagementController extends Controller
     public function updatePatient(Request $request, Patient $patient)
     {
         $validated = $request->validate([
+            'initials' => ['nullable', 'string', 'max:4'],
             'name' => ['required', 'string', 'max:255'],
-            'age' => ['required', 'integer', 'min:0'],
+            'age' => ['required', 'integer', 'min:0', 'max:255'],
             'gender' => ['required', 'string', Rule::in(['Male', 'Female', 'Other'])],
+            'disease_categories' => ['nullable', 'json'],
+            'appointment_start_time' => ['nullable', 'date_format:H:i:s'],
+            'appointment_end_time' => ['nullable', 'date_format:H:i:s'],
+            'appointment_date' => ['nullable', 'date'],
+            'reason' => ['nullable', 'string', 'max:255'],
+            'status' => ['nullable', 'string', Rule::in(['Completed', 'Upcoming'])],
             'room' => ['nullable', 'string', 'max:255'],
-            'reason' => ['nullable', 'string', 'max:500'],
-            'status' => ['nullable', 'string', 'in:Active,Pending,Completed,Cancelled'], // validate status
             'admitted' => ['boolean'],
+            'admission_timestamp' => ['nullable', 'date'],
+            'discharge_timestamp' => ['nullable', 'date'],
+            'doctor_id' => ['nullable', 'exists:users,id'],
+            'nurse_id' => ['nullable', 'exists:users,id'],
         ]);
+
+        // Generate initials if missing
+        if (empty($validated['initials'])) {
+            $names = explode(' ', $validated['name']);
+            $initials = '';
+            foreach ($names as $n) {
+                $initials .= strtoupper(substr($n, 0, 1));
+            }
+            $validated['initials'] = substr($initials, 0, 4);
+        }
 
         $patient->update($validated);
 
         return response()->json(['message' => 'Patient updated successfully.', 'patient' => $patient]);
     }
-
 }
