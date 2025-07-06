@@ -8,6 +8,7 @@ use Inertia\Inertia;
 use App\Http\Controllers\Admin\ManagementController as AdminManagement;
 use App\Http\Controllers\Nurse\ManagementController as NurseManagement;
 use App\Http\Controllers\Doctor\ManagementController as DoctorManagement;
+use App\Http\Controllers\Doctor\PatientController as DoctorPatientController;
 use App\Models\Patient;
 
 /*
@@ -26,7 +27,7 @@ Route::get('/', function () {
     ]);
 });
 
-// Default dashboard route
+// Default dashboard route (authenticated & verified)
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
@@ -67,8 +68,11 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('doctor')->name('doctor.')->group(function () {
         Route::get('/dashboard', [DoctorManagement::class, 'dashboard'])->name('dashboard');
 
-        // Route to show all patients assigned to the logged-in doctor
+        // Route to show all patients assigned to the logged-in doctor (custom method)
         Route::get('/all-patients', [DoctorManagement::class, 'allPatients'])->name('patients.all');
+
+        // Optional: CRUD routes for patients assigned to doctor (if you have PatientController)
+        Route::resource('patients', DoctorPatientController::class);
     });
 
     // API route for patient info by patient_code (query param)
@@ -97,7 +101,5 @@ Route::get('/api/patients/{id}', function ($id) {
     }
     return response()->json($patient);
 });
-
-
 
 require __DIR__ . '/auth.php';
