@@ -61,13 +61,18 @@ export default function EditPatientModal({ patient, onClose, onSave }) {
                 body: JSON.stringify(form),
             });
 
-            const data = await response.json();
+            let data = null;
+            try {
+                data = await response.json();
+            } catch (jsonError) {
+                alert('Server returned invalid JSON.');
+                setLoading(false);
+                return;
+            }
 
             if (response.ok) {
                 onSave(data.patient);
                 onClose();
-                // Reload the page after successful save
-                window.location.reload();
             } else if (response.status === 422) {
                 // Validation errors returned by Laravel
                 setErrors(data.errors || {});
