@@ -7,12 +7,13 @@ export default function EditPatientModal({ patient, onClose, onSave }) {
         age: '',
         gender: '',
         room: '',
+        reason: '',
         admitted: false,
+        status: '', // added status field
     });
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
 
-    // Initialize form when patient prop changes
     useEffect(() => {
         if (patient) {
             setForm({
@@ -21,7 +22,9 @@ export default function EditPatientModal({ patient, onClose, onSave }) {
                 age: patient.age || '',
                 gender: patient.gender || '',
                 room: patient.room || '',
+                reason: patient.reason || '',
                 admitted: patient.admitted || false,
+                status: patient.status || '', // initialize status
             });
             setErrors({});
         }
@@ -34,7 +37,6 @@ export default function EditPatientModal({ patient, onClose, onSave }) {
             [name]: type === 'checkbox' ? checked : value,
         }));
 
-        // Clear error for the field on change
         if (errors[name]) {
             setErrors(e => ({ ...e, [name]: null }));
         }
@@ -61,13 +63,19 @@ export default function EditPatientModal({ patient, onClose, onSave }) {
                 body: JSON.stringify(form),
             });
 
-            const data = await response.json();
+            let data = null;
+            try {
+                data = await response.json();
+            } catch (jsonError) {
+                alert('Server returned invalid JSON.');
+                setLoading(false);
+                return;
+            }
 
             if (response.ok) {
                 onSave(data.patient);
                 onClose();
             } else if (response.status === 422) {
-                // Validation errors returned by Laravel
                 setErrors(data.errors || {});
             } else {
                 alert(data.message || 'An error occurred while updating the patient.');
@@ -97,6 +105,7 @@ export default function EditPatientModal({ patient, onClose, onSave }) {
                         />
                         {errors.name && <p className="text-red-600 text-xs mt-1">{errors.name[0]}</p>}
                     </div>
+
                     <div className="flex space-x-2">
                         <div className="flex-1">
                             <label className="block text-sm font-medium">Age</label>
@@ -112,6 +121,7 @@ export default function EditPatientModal({ patient, onClose, onSave }) {
                             />
                             {errors.age && <p className="text-red-600 text-xs mt-1">{errors.age[0]}</p>}
                         </div>
+
                         <div className="flex-1">
                             <label className="block text-sm font-medium">Gender</label>
                             <select
@@ -130,6 +140,7 @@ export default function EditPatientModal({ patient, onClose, onSave }) {
                             {errors.gender && <p className="text-red-600 text-xs mt-1">{errors.gender[0]}</p>}
                         </div>
                     </div>
+
                     <div>
                         <label className="block text-sm font-medium">Room</label>
                         <input
@@ -141,6 +152,39 @@ export default function EditPatientModal({ patient, onClose, onSave }) {
                         />
                         {errors.room && <p className="text-red-600 text-xs mt-1">{errors.room[0]}</p>}
                     </div>
+
+                    <div>
+                        <label className="block text-sm font-medium">Reason</label>
+                        <textarea
+                            name="reason"
+                            value={form.reason}
+                            onChange={handleChange}
+                            className={`w-full border rounded px-2 py-1 ${errors.reason ? 'border-red-500' : ''}`}
+                            rows={3}
+                            disabled={loading}
+                        />
+                        {errors.reason && <p className="text-red-600 text-xs mt-1">{errors.reason[0]}</p>}
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium">Status</label>
+                        <select
+                            name="status"
+                            value={form.status}
+                            onChange={handleChange}
+                            className={`w-full border rounded px-2 py-1 ${errors.status ? 'border-red-500' : ''}`}
+                            disabled={loading}
+                        >
+                            <option value="">Select Status</option>
+                            <option value="Active">Active</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Cancelled">Cancelled</option>
+                            {/* Add other statuses as needed */}
+                        </select>
+                        {errors.status && <p className="text-red-600 text-xs mt-1">{errors.status[0]}</p>}
+                    </div>
+
                     <div className="flex items-center">
                         <input
                             name="admitted"
@@ -156,6 +200,7 @@ export default function EditPatientModal({ patient, onClose, onSave }) {
                         </label>
                         {errors.admitted && <p className="text-red-600 text-xs mt-1 ml-4">{errors.admitted[0]}</p>}
                     </div>
+
                     <div className="flex justify-end space-x-2 pt-2">
                         <button
                             type="button"

@@ -1,17 +1,16 @@
 import React from 'react';
 
 export default function StatsPanel({ stats }) {
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-      {stats.map((stat, idx) => (
-        <div key={idx} className={`rounded-lg p-4 shadow ${stat.color}`}>
-          <div className={`text-2xl font-bold ${stat.text}`}>{stat.value}</div>
-          <div className="text-gray-600">{stat.label}</div>
-          <button className="mt-2 text-blue-600 underline text-sm">{stat.action}</button>
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {stats.map((stat, idx) => (
+                <div key={idx} className={`rounded-lg p-4 shadow ${stat.color}`}>
+                    <div className={`text-2xl font-bold ${stat.text}`}>{stat.value}</div>
+                    <div className="text-gray-600">{stat.label}</div>
+                </div>
+            ))}
         </div>
-      ))}
-    </div>
-  );
+    );
 }
 
 // This component displays a panel of statistics for the nurse.
