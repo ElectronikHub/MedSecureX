@@ -1,187 +1,175 @@
-import React, { useState, useEffect } from 'react';
+<?php
 
-export default function EditPatientModal({ patient, onClose, onSave }) {
-    const [form, setForm] = useState({
-        id: '',
-        name: '',
-        age: '',
-        gender: '',
-        room: '',
-        admitted: false,
-    });
-    const [loading, setLoading] = useState(false);
-    const [errors, setErrors] = useState({});
+namespace App\Http\Controllers\Nurse;
 
-    // Initialize form when patient prop changes
-    useEffect(() => {
-        if (patient) {
-            setForm({
-                id: patient.id || '',
-                name: patient.name || '',
-                age: patient.age || '',
-                gender: patient.gender || '',
-                room: patient.room || '',
-                admitted: patient.admitted || false,
-            });
-            setErrors({});
+use App\Http\Controllers\Controller;
+use Inertia\Inertia;
+use App\Models\Patient;
+use App\Models\Schedule;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
+use Illuminate\Validation\Rule;
+
+class ManagementController extends Controller
+{
+    public function dashboard()
+    {
+        $user = Auth::user();
+        $now = Carbon::now('Asia/Manila'); // Philippine timezone
+        $today = $now->toDateString();
+        $currentTime = $now->format('H:i:s');
+
+        // Check if nurse is currently on duty
+        $currentSchedule = Schedule::where('user_id', $user->id)
+            ->where('shift_date', $today)
+            ->where('start_time', '<', $currentTime)
+            ->where('end_time', '>', $currentTime)
+            ->first();
+
+        $isOnDuty = $currentSchedule !== null;
+
+        $patients = [];
+        $schedule = []; // Your schedule data if any
+        $stats = [];
+        $notifications = [];
+
+        // Fetch doctors and nurses for dropdowns
+        $doctors = User::where('role', 'doctor')->select('id', 'name')->get();
+        $nurses = User::where('role', 'nurse')->select('id', 'name')->get();
+
+        if ($isOnDuty) {
+            // Fetch patients (consider filtering by nurse_id if needed)
+            $patients = Patient::all()->map(function ($patient) {
+                $initials = $patient->initials;
+                if (!$initials) {
+                    $names = explode(' ', $patient->name);
+                    $initials = '';
+                    foreach ($names as $n) {
+                        $initials .= strtoupper(substr($n, 0, 1));
+                    }
+                }
+
+                $idForQr = $patient->patient_code ?? $patient->id;
+
+                $qrData = json_encode([
+                    'id' => $idForQr,
+                    'name' => $patient->name,
+                    'age' => $patient->age,
+                    'gender' => $patient->gender,
+                    'appointment_time' => optional($patient->appointment_start_time)->format('H:i') . ' - ' . optional($patient->appointment_end_time)->format('H:i'),
+                    'reason' => $patient->reason,
+                    'status' => $patient->status,
+                    'room' => $patient->room ?? '—',
+                    'admitted' => (bool) $patient->admitted,
+                ]);
+
+                return [
+                    'id' => $patient->id,
+                    'initials' => $initials,
+                    'name' => $patient->name,
+                    'patient_code' => $patient->patient_code,
+                    'age' => $patient->age,
+                    'gender' => $patient->gender,
+                    'appointment_time' => optional($patient->appointment_start_time)->format('h:i A') . ' - ' . optional($patient->appointment_end_time)->format('h:i A'),
+                    'reason' => $patient->reason,
+                    'status' => $patient->status,
+                    'statusColor' => $patient->status === 'Completed' ? 'green' : 'yellow',
+                    'room' => $patient->room ?? '—',
+                    'admitted' => (bool) $patient->admitted,
+                    'doctor_id' => $patient->doctor_id,
+                    'nurse_id' => $patient->nurse_id,
+                    'qrData' => $qrData,
+                ];
+            })->toArray();
+
+            $patientsCollection = collect($patients);
+            $stats = [
+                ['label' => 'Patients Today', 'value' => count($patients), 'action' => 'View all', 'color' => 'bg-blue-50', 'text' => 'text-blue-600'],
+                ['label' => 'Completed Appointments', 'value' => $patientsCollection->where('status', 'Completed')->count(), 'action' => 'View details', 'color' => 'bg-green-50', 'text' => 'text-green-600'],
+                ['label' => 'Pending Appointments', 'value' => $patientsCollection->where('status', 'Upcoming')->count(), 'action' => 'View schedule', 'color' => 'bg-yellow-50', 'text' => 'text-yellow-600'],
+                ['label' => 'Critical Alerts', 'value' => 1, 'action' => 'View alerts', 'color' => 'bg-red-50', 'text' => 'text-red-600'],
+            ];
+
+            // Example notifications, replace with real data as needed
+            $notifications = [
+                ['type' => 'alert', 'title' => 'Critical Alert', 'message' => "Patient Robert Johnson's blood pressure readings require immediate attention.", 'time' => '30 minutes ago'],
+                ['type' => 'lab', 'title' => 'Lab Results Available', 'message' => 'New lab results are available for Jane Smith.', 'time' => '2 hours ago'],
+                ['type' => 'med', 'title' => 'Medication Reminder', 'message' => 'Prescription renewal needed for Thomas Brown.', 'time' => '5 hours ago'],
+                ['type' => 'update', 'title' => 'Schedule Updated', 'message' => 'Your schedule for tomorrow has been updated.', 'time' => 'Yesterday'],
+            ];
         }
-    }, [patient]);
 
-    const handleChange = e => {
-        const { name, value, type, checked } = e.target;
-        setForm(f => ({
-            ...f,
-            [name]: type === 'checkbox' ? checked : value,
-        }));
+        return Inertia::render('NurseDashboard', [
+            'patients' => $patients,
+            'schedule' => $schedule,
+            'stats' => $stats,
+            'notifications' => $notifications,
+            'isOnDuty' => $isOnDuty,
+            'currentSchedule' => $currentSchedule,
+            'doctors' => $doctors,
+            'nurses' => $nurses,
+        ]);
+    }
 
-        // Clear error for the field on change
-        if (errors[name]) {
-            setErrors(e => ({ ...e, [name]: null }));
+    public function storePatient(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'patient_code' => ['required', 'string', 'max:255', 'unique:patients,patient_code'],
+            'age' => ['required', 'integer', 'min:0'],
+            'gender' => ['required', 'string', Rule::in(['Male', 'Female', 'Other'])],
+            'room' => ['nullable', 'string', 'max:255'],
+            'reason' => ['nullable', 'string', 'max:500'],
+            'appointment_date' => ['required', 'date'],
+            'admitted' => ['boolean'],
+            'doctor_id' => ['nullable', 'exists:users,id'],
+            'nurse_id' => ['nullable', 'exists:users,id'],
+        ]);
+
+        // Default appointment times (can be extended to accept from request)
+        $validated['appointment_start_time'] = '09:00:00';
+        $validated['appointment_end_time'] = '09:30:00';
+
+        if (!empty($validated['admitted'])) {
+            $validated['admission_timestamp'] = Carbon::now();
         }
-    };
 
-    const getCsrfToken = () => {
-        const token = document.querySelector('meta[name="csrf-token"]');
-        return token ? token.getAttribute('content') : '';
-    };
+        // Generate initials if missing
+        if (empty($validated['initials'])) {
+            $names = explode(' ', $validated['name']);
+            $initials = '';
+            foreach ($names as $n) {
+                $initials .= strtoupper(substr($n, 0, 1));
+            }
+            $validated['initials'] = $initials;
+        }
 
-    const handleSubmit = async e => {
-        e.preventDefault();
-        setLoading(true);
-        setErrors({});
+        $patient = Patient::create($validated);
+
+        return response()->json(['message' => 'Patient created successfully.', 'patient' => $patient], 201);
+    }
+
+    public function updatePatient(Request $request, Patient $patient)
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'age' => ['required', 'integer', 'min:0'],
+            'gender' => ['required', 'string', Rule::in(['Male', 'Female', 'Other'])],
+            'room' => ['nullable', 'string', 'max:255'],
+            'admitted' => ['boolean'],
+        ]);
 
         try {
-            const response = await fetch(`/nurse/patients/${form.id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': getCsrfToken(),
-                    Accept: 'application/json',
-                },
-                body: JSON.stringify(form),
-            });
-
-            let data = null;
-            try {
-                data = await response.json();
-            } catch (jsonError) {
-                alert('Server returned invalid JSON.');
-                setLoading(false);
-                return;
-            }
-
-            if (response.ok) {
-                onSave(data.patient);
-                onClose();
-            } else if (response.status === 422) {
-                // Validation errors returned by Laravel
-                setErrors(data.errors || {});
-            } else {
-                alert(data.message || 'An error occurred while updating the patient.');
-            }
-        } catch (error) {
-            alert('Network error: Could not connect to the server.');
-            console.error(error);
-        } finally {
-            setLoading(false);
+            $patient->update($validated);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to update patient.',
+                'error' => $e->getMessage(),
+            ], 500);
         }
-    };
 
-    return (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
-            <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-lg">
-                <h2 className="text-lg font-semibold mb-4">Edit Patient</h2>
-                <form onSubmit={handleSubmit} className="space-y-3" noValidate>
-                    <div>
-                        <label className="block text-sm font-medium">Name</label>
-                        <input
-                            name="name"
-                            value={form.name}
-                            onChange={handleChange}
-                            className={`w-full border rounded px-2 py-1 ${errors.name ? 'border-red-500' : ''}`}
-                            required
-                            disabled={loading}
-                        />
-                        {errors.name && <p className="text-red-600 text-xs mt-1">{errors.name[0]}</p>}
-                    </div>
-                    <div className="flex space-x-2">
-                        <div className="flex-1">
-                            <label className="block text-sm font-medium">Age</label>
-                            <input
-                                name="age"
-                                type="number"
-                                value={form.age}
-                                onChange={handleChange}
-                                className={`w-full border rounded px-2 py-1 ${errors.age ? 'border-red-500' : ''}`}
-                                required
-                                disabled={loading}
-                                min="0"
-                            />
-                            {errors.age && <p className="text-red-600 text-xs mt-1">{errors.age[0]}</p>}
-                        </div>
-                        <div className="flex-1">
-                            <label className="block text-sm font-medium">Gender</label>
-                            <select
-                                name="gender"
-                                value={form.gender}
-                                onChange={handleChange}
-                                className={`w-full border rounded px-2 py-1 ${errors.gender ? 'border-red-500' : ''}`}
-                                required
-                                disabled={loading}
-                            >
-                                <option value="">Select Gender</option>
-                                <option value="Male">Male</option>
-                                <option value="Female">Female</option>
-                                <option value="Other">Other</option>
-                            </select>
-                            {errors.gender && <p className="text-red-600 text-xs mt-1">{errors.gender[0]}</p>}
-                        </div>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium">Room</label>
-                        <input
-                            name="room"
-                            value={form.room}
-                            onChange={handleChange}
-                            className={`w-full border rounded px-2 py-1 ${errors.room ? 'border-red-500' : ''}`}
-                            disabled={loading}
-                        />
-                        {errors.room && <p className="text-red-600 text-xs mt-1">{errors.room[0]}</p>}
-                    </div>
-                    <div className="flex items-center">
-                        <input
-                            name="admitted"
-                            type="checkbox"
-                            checked={form.admitted}
-                            onChange={handleChange}
-                            className="ml-0 mr-2"
-                            disabled={loading}
-                            id="admitted-checkbox"
-                        />
-                        <label htmlFor="admitted-checkbox" className="block text-sm font-medium">
-                            Admitted
-                        </label>
-                        {errors.admitted && <p className="text-red-600 text-xs mt-1 ml-4">{errors.admitted[0]}</p>}
-                    </div>
-                    <div className="flex justify-end space-x-2 pt-2">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
-                            disabled={loading}
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                            disabled={loading}
-                        >
-                            {loading ? 'Saving...' : 'Save'}
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    );
+        return response()->json(['message' => 'Patient updated successfully.', 'patient' => $patient]);
+    }
 }
