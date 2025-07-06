@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-// Modal component for adding staff (use your existing AddStaffModal component)
+// Modal component for adding staff
 function AddStaffModal({ open, onClose, form, errors, onChange, onSubmit, loading }) {
     if (!open) return null;
 
@@ -166,13 +166,11 @@ export default function StaffPanel({ doctors = [], nurses = [] }) {
     // Show/hide retired staff
     const [showRetired, setShowRetired] = useState(false);
 
-    // Helper to get CSRF token from meta tag
     const getCsrfToken = () => {
         const token = document.querySelector("meta[name='csrf-token']");
         return token ? token.getAttribute("content") : "";
     };
 
-    // Generate a random temporary password
     const generateTempPassword = (length = 10) => {
         const chars =
             "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()";
@@ -237,7 +235,6 @@ export default function StaffPanel({ doctors = [], nurses = [] }) {
         }
     };
 
-    // Helper to get status badge color
     const getStatusColorClass = (status) => {
         switch (status) {
             case "Active":
@@ -295,6 +292,10 @@ export default function StaffPanel({ doctors = [], nurses = [] }) {
             ))
         );
 
+    // Calculate active counts for tabs
+    const activeDoctors = safeDoctors.filter((d) => d.status === "Active");
+    const activeNurses = safeNurses.filter((n) => n.status === "Active");
+
     // Calculate total pages for pagination
     const totalStaff = filterRetired(
         activeTab === "doctors" ? safeDoctors : safeNurses
@@ -321,7 +322,7 @@ export default function StaffPanel({ doctors = [], nurses = [] }) {
                                     : "bg-gray-200 text-black"
                                 }`}
                         >
-                            Doctors ({safeDoctors.length})
+                            Doctors ({activeDoctors.length})
                         </button>
                         <button
                             onClick={() => {
@@ -333,7 +334,7 @@ export default function StaffPanel({ doctors = [], nurses = [] }) {
                                     : "bg-gray-200 text-black"
                                 }`}
                         >
-                            Nurses ({safeNurses.length})
+                            Nurses ({activeNurses.length})
                         </button>
                     </div>
                     <div className="flex items-center gap-2">
