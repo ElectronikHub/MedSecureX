@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import EditPatientModal from './EditPatientModal';
-import AddPatientModal from './AddPatientModal';
+// import EditPatientModal from './EditPatientModal';
+// import AddPatientModal from './AddPatientModal';
 
 export default function PatientsPanel({
     patients,
