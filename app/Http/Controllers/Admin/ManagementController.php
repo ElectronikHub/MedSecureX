@@ -131,9 +131,11 @@ class ManagementController extends Controller
             'password' => Hash::make($validated['password']),
         ]);
 
-        return redirect()->route('admin.dashboard')->with('success', 'Staff created successfully.');
+        return response()->json([
+            'message' => 'Staff created successfully.',
+            'user' => $user,
+        ], 201);
     }
-
 
     public function updateOrCreateSchedule(Request $request, $id = null)
     {
