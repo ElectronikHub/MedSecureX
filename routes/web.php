@@ -8,7 +8,6 @@ use Inertia\Inertia;
 use App\Http\Controllers\Admin\ManagementController as AdminManagement;
 use App\Http\Controllers\Nurse\ManagementController as NurseManagement;
 use App\Http\Controllers\Doctor\ManagementController as DoctorManagement;
-use App\Http\Controllers\Doctor\PatientController as DoctorPatientController;
 use App\Models\Patient;
 
 /*
@@ -27,7 +26,7 @@ Route::get('/', function () {
     ]);
 });
 
-// Default dashboard route (authenticated & verified)
+// Default dashboard route
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
@@ -59,20 +58,19 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('nurse')->name('nurse.')->group(function () {
         Route::get('/dashboard', [NurseManagement::class, 'dashboard'])->name('dashboard');
 
+    });
+
+    Route::prefix('nurse')->name('nurse.')->middleware('auth')->group(function () {
         Route::post('/patients', [NurseManagement::class, 'storePatient'])->name('patients.store');
         Route::put('/patients/{patient}', [NurseManagement::class, 'updatePatient'])->name('patients.update');
         Route::delete('/patients/{patient}', [NurseManagement::class, 'deletePatient'])->name('patients.delete');
     });
 
+
     // Doctor routes
     Route::prefix('doctor')->name('doctor.')->group(function () {
         Route::get('/dashboard', [DoctorManagement::class, 'dashboard'])->name('dashboard');
-
-        // Route to show all patients assigned to the logged-in doctor (custom method)
-        Route::get('/all-patients', [DoctorManagement::class, 'allPatients'])->name('patients.all');
-
-        // Optional: CRUD routes for patients assigned to doctor (if you have PatientController)
-        Route::resource('patients', DoctorPatientController::class);
+        // Add doctor-specific routes here as needed
     });
 
     // API route for patient info by patient_code (query param)
