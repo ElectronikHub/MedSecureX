@@ -13,14 +13,13 @@ class ManagementController extends Controller
 {
     public function dashboard()
     {
-        $doctorId = Auth::id(); // Get logged-in doctor's user ID
-        $now = Carbon::now('Asia/Manila'); // Use PH timezone (adjust if needed)
+        $doctorId = Auth::id(); // Logged-in doctor user ID
+        $now = Carbon::now('Asia/Manila'); // Philippine timezone
         $today = $now->toDateString();
         $currentTime = $now->format('H:i:s');
 
-        // Check if the doctor is on duty right now
+        // Check if the doctor is currently on duty by schedule linked to user_id
         $currentSchedule = Schedule::where('user_id', $doctorId)
-            ->where('role', 'doctor')
             ->where('shift_date', $today)
             ->where('start_time', '<=', $currentTime)
             ->where('end_time', '>=', $currentTime)
@@ -33,10 +32,11 @@ class ManagementController extends Controller
         $timeline = [];
 
         if ($isOnDuty) {
-            // Fetch only admitted patients assigned to this doctor scheduled for today
+            // Fetch admitted patients assigned to this doctor scheduled for today
+            // Filter by appointment_date (date column), not appointment_start_time (time)
             $patientsToday = Patient::where('doctor_id', $doctorId)
-                ->where('admitted', 1) // Only admitted patients
-                ->whereDate('appointment_start_time', $today)
+                ->where('admitted', true)
+                ->whereDate('appointment_date', $today)
                 ->get()
                 ->map(function ($patient) {
                     return [
@@ -76,7 +76,7 @@ class ManagementController extends Controller
                 ],
             ];
 
-            // Example timeline events
+            // Example timeline events (you can customize or fetch real data)
             $timeline = [
                 ['time' => '8:00 AM', 'event' => 'Morning briefing'],
                 ['time' => '9:00 AM', 'event' => 'Patient: John Doe - Routine Checkup'],
@@ -93,11 +93,3 @@ class ManagementController extends Controller
         ]);
     }
 }
-
-
-// Note: This code assumes you have the necessary models and relationships set up.
-// It also assumes you have Inertia.js set up in your Laravel application.
-// The dashboard will display the doctor's current schedule, patients for today, and relevant statistics.
-// // This code is part of a Laravel application and is used to manage the admin dashboard.
-// // It retrieves statistics about users, doctors, nurses, and patients, and formats the data for display in an Inertia.js view.
-// // The code also includes logic to format the status of doctors and nurses, and to retrieve their schedules.
