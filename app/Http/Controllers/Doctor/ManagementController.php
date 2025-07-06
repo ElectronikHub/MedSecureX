@@ -29,7 +29,7 @@ class ManagementController extends Controller
 
         $patientsToday = collect();
         $admittedPatients = collect();
-        $allPatients = collect(); // New: all patients assigned to doctor
+        $allPatients = collect();
         $stats = [];
         $timeline = [];
 
@@ -43,7 +43,9 @@ class ManagementController extends Controller
                         'id' => $patient->id,
                         'name' => $patient->name,
                         'room' => $patient->room,
-                        'admission_timestamp' => $patient->admission_timestamp ? $patient->admission_timestamp->format('M d, Y h:i A') : null,
+                        'admission_timestamp' => $patient->admission_timestamp
+                            ? Carbon::parse($patient->admission_timestamp)->format('M d, Y h:i A')
+                            : null,
                         'reason' => $patient->reason,
                     ];
                 });
@@ -54,19 +56,21 @@ class ManagementController extends Controller
                 ->whereDate('appointment_date', $today)
                 ->get()
                 ->map(function ($patient) {
+                    $startTime = $patient->appointment_start_time ? Carbon::parse($patient->appointment_start_time)->format('h:i A') : null;
+                    $endTime = $patient->appointment_end_time ? Carbon::parse($patient->appointment_end_time)->format('h:i A') : null;
+
                     return [
                         'id' => $patient->id,
                         'name' => $patient->name,
                         'status' => $patient->status,
-                        'appointment_time' => optional($patient->appointment_start_time)->format('h:i A')
-                            . ' - ' . optional($patient->appointment_end_time)->format('h:i A'),
+                        'appointment_time' => $startTime && $endTime ? $startTime . ' - ' . $endTime : null,
                         'reason' => $patient->reason,
                         'admitted' => true,
                         'admission_status' => 'Admitted',
                     ];
                 });
 
-            // New: Fetch all patients assigned to this doctor (no admission or date filter)
+            // Fetch all patients assigned to this doctor (no admission or date filter)
             $allPatients = Patient::where('doctor_id', $doctorId)
                 ->get()
                 ->map(function ($patient) {
@@ -77,15 +81,25 @@ class ManagementController extends Controller
                         'age' => $patient->age,
                         'gender' => $patient->gender,
                         'disease_categories' => $patient->disease_categories,
-                        'appointment_start_time' => $patient->appointment_start_time ? $patient->appointment_start_time->format('h:i A') : null,
-                        'appointment_end_time' => $patient->appointment_end_time ? $patient->appointment_end_time->format('h:i A') : null,
-                        'appointment_date' => $patient->appointment_date ? $patient->appointment_date->format('M d, Y') : null,
+                        'appointment_start_time' => $patient->appointment_start_time
+                            ? Carbon::parse($patient->appointment_start_time)->format('h:i A')
+                            : null,
+                        'appointment_end_time' => $patient->appointment_end_time
+                            ? Carbon::parse($patient->appointment_end_time)->format('h:i A')
+                            : null,
+                        'appointment_date' => $patient->appointment_date
+                            ? Carbon::parse($patient->appointment_date)->format('M d, Y')
+                            : null,
                         'reason' => $patient->reason,
                         'status' => $patient->status,
                         'room' => $patient->room,
                         'admitted' => $patient->admitted,
-                        'admission_timestamp' => $patient->admission_timestamp ? $patient->admission_timestamp->format('M d, Y h:i A') : null,
-                        'discharge_timestamp' => $patient->discharge_timestamp ? $patient->discharge_timestamp->format('M d, Y h:i A') : null,
+                        'admission_timestamp' => $patient->admission_timestamp
+                            ? Carbon::parse($patient->admission_timestamp)->format('M d, Y h:i A')
+                            : null,
+                        'discharge_timestamp' => $patient->discharge_timestamp
+                            ? Carbon::parse($patient->discharge_timestamp)->format('M d, Y h:i A')
+                            : null,
                     ];
                 });
 
@@ -125,13 +139,11 @@ class ManagementController extends Controller
         return Inertia::render('DoctorDashboard', [
             'patientsToday' => $patientsToday,
             'admittedPatients' => $admittedPatients,
-            'allPatients' => $allPatients, // Pass all patients to frontend
+            'allPatients' => $allPatients,
             'stats' => $stats,
             'timeline' => $timeline,
             'isOnDuty' => $isOnDuty,
             'currentSchedule' => $currentSchedule,
         ]);
     }
-
-
 }
