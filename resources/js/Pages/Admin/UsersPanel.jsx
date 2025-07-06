@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 
 const ALL_ROLES = ['admin', 'doctor', 'nurse', 'user'];
+const ALL_STATUSES = ['Active', 'Retired']; // Add more statuses as needed
 
 export default function UsersPanel({ users: initialUsers }) {
     const [users, setUsers] = useState(initialUsers);
     const [editingUserId, setEditingUserId] = useState(null);
     const [selectedRole, setSelectedRole] = useState('');
+    const [selectedStatus, setSelectedStatus] = useState('');
     const [loading, setLoading] = useState(false);
     const [filter, setFilter] = useState({ name: '', email: '', role: '' });
 
-    // Modal state
+    // Modal state for Add User
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
     // New user form state
@@ -19,7 +21,9 @@ export default function UsersPanel({ users: initialUsers }) {
         role: '',
         password: '',
         password_confirmation: '',
+        status: 'Active', // default new user status
     });
+    const [tempPassword, setTempPassword] = useState('');
     const [adding, setAdding] = useState(false);
     const [addErrors, setAddErrors] = useState({});
 
@@ -31,14 +35,17 @@ export default function UsersPanel({ users: initialUsers }) {
     const startEditing = (user) => {
         setEditingUserId(user.id);
         setSelectedRole(user.role || '');
+        setSelectedStatus(user.status || 'Active');
     };
 
     const cancelEditing = () => {
         setEditingUserId(null);
         setSelectedRole('');
+        setSelectedStatus('');
     };
 
-    const saveRole = async (userId) => {
+    // Save updated role and status
+    const saveUser = async (userId) => {
         setLoading(true);
         try {
             const response = await fetch(`/admin/users/${userId}/role`, {
@@ -48,24 +55,25 @@ export default function UsersPanel({ users: initialUsers }) {
                     'X-CSRF-TOKEN': getCsrfToken(),
                     'Accept': 'application/json',
                 },
-                body: JSON.stringify({ role: selectedRole }),
+                body: JSON.stringify({ role: selectedRole, status: selectedStatus }),
                 credentials: 'same-origin',
             });
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to update role');
+                throw new Error(errorData.message || 'Failed to update user');
             }
 
             setUsers((prev) =>
-                prev.map((u) => (u.id === userId ? { ...u, role: selectedRole } : u))
+                prev.map((u) =>
+                    u.id === userId ? { ...u, role: selectedRole, status: selectedStatus } : u
+                )
             );
 
-            setEditingUserId(null);
-            setSelectedRole('');
-            alert('User role updated successfully');
+            cancelEditing();
+            alert('User updated successfully');
         } catch (error) {
-            alert('Error updating role: ' + error.message);
+            alert('Error updating user: ' + error.message);
         } finally {
             setLoading(false);
         }
@@ -90,13 +98,16 @@ export default function UsersPanel({ users: initialUsers }) {
     };
 
     const openAddModal = () => {
+        const tempPass = generateTempPassword();
+        setTempPassword(tempPass);
         setIsAddModalOpen(true);
         setNewUser({
             name: '',
             email: '',
             role: '',
-            password: '',
-            password_confirmation: '',
+            status: 'Active',
+            password: tempPass,
+            password_confirmation: tempPass,
         });
         setAddErrors({});
     };
@@ -144,6 +155,16 @@ export default function UsersPanel({ users: initialUsers }) {
         } finally {
             setAdding(false);
         }
+    };
+
+    // Temporary password generator
+    const generateTempPassword = (length = 10) => {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()';
+        let pass = '';
+        for (let i = 0; i < length; i++) {
+            pass += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return pass;
     };
 
     return (
@@ -246,15 +267,30 @@ export default function UsersPanel({ users: initialUsers }) {
                                     )}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${user.statusColor}`}>
-                                        {user.status}
-                                    </span>
+                                    {editingUserId === user.id ? (
+                                        <select
+                                            value={selectedStatus}
+                                            onChange={e => setSelectedStatus(e.target.value)}
+                                            disabled={loading}
+                                            className="rounded border-gray-300 dark:bg-gray-700 dark:text-white"
+                                        >
+                                            {ALL_STATUSES.map(status => (
+                                                <option key={status} value={status}>
+                                                    {status}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    ) : (
+                                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${user.statusColor}`}>
+                                            {user.status}
+                                        </span>
+                                    )}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     {editingUserId === user.id ? (
                                         <>
                                             <button
-                                                onClick={() => saveRole(user.id)}
+                                                onClick={() => saveUser(user.id)}
                                                 disabled={loading}
                                                 className="mr-2 text-green-600 hover:text-green-900"
                                             >
@@ -288,7 +324,13 @@ export default function UsersPanel({ users: initialUsers }) {
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-md">
                         <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Add New User</h3>
+                        <p className="mb-4 text-sm text-gray-700 dark:text-gray-300">
+                            Temporary password generated: <strong>{tempPassword}</strong><br />
+                            Please communicate this password securely to the new user.
+                        </p>
                         <form onSubmit={handleAddUser} className="space-y-4">
+                            {/* Name, Email, Role inputs same as before */}
+
                             <div>
                                 <label className="block text-sm font-medium mb-1" htmlFor="name">Name</label>
                                 <input
@@ -338,17 +380,35 @@ export default function UsersPanel({ users: initialUsers }) {
                             </div>
 
                             <div>
+                                <label className="block text-sm font-medium mb-1" htmlFor="status">Status</label>
+                                <select
+                                    id="status"
+                                    name="status"
+                                    value={newUser.status}
+                                    onChange={handleNewUserChange}
+                                    className={`w-full rounded border p-2 dark:bg-gray-700 dark:text-white ${addErrors.status ? 'border-red-500' : 'border-gray-300'}`}
+                                    required
+                                >
+                                    {ALL_STATUSES.map(status => (
+                                        <option key={status} value={status}>
+                                            {status}
+                                        </option>
+                                    ))}
+                                </select>
+                                {addErrors.status && <p className="text-red-600 text-xs mt-1">{addErrors.status[0]}</p>}
+                            </div>
+
+                            {/* Password fields pre-filled and read-only */}
+                            <div>
                                 <label className="block text-sm font-medium mb-1" htmlFor="password">Password</label>
                                 <input
                                     id="password"
                                     name="password"
-                                    type="password"
+                                    type="text"
                                     value={newUser.password}
-                                    onChange={handleNewUserChange}
-                                    className={`w-full rounded border p-2 dark:bg-gray-700 dark:text-white ${addErrors.password ? 'border-red-500' : 'border-gray-300'}`}
-                                    required
+                                    readOnly
+                                    className="w-full rounded border p-2 bg-gray-100 dark:bg-gray-700 dark:text-white cursor-not-allowed"
                                 />
-                                {addErrors.password && <p className="text-red-600 text-xs mt-1">{addErrors.password[0]}</p>}
                             </div>
 
                             <div>
@@ -356,13 +416,11 @@ export default function UsersPanel({ users: initialUsers }) {
                                 <input
                                     id="password_confirmation"
                                     name="password_confirmation"
-                                    type="password"
+                                    type="text"
                                     value={newUser.password_confirmation}
-                                    onChange={handleNewUserChange}
-                                    className={`w-full rounded border p-2 dark:bg-gray-700 dark:text-white ${addErrors.password_confirmation ? 'border-red-500' : 'border-gray-300'}`}
-                                    required
+                                    readOnly
+                                    className="w-full rounded border p-2 bg-gray-100 dark:bg-gray-700 dark:text-white cursor-not-allowed"
                                 />
-                                {addErrors.password_confirmation && <p className="text-red-600 text-xs mt-1">{addErrors.password_confirmation[0]}</p>}
                             </div>
 
                             <div className="flex justify-end gap-2">

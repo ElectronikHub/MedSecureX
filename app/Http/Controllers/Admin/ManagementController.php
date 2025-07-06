@@ -107,13 +107,16 @@ class ManagementController extends Controller
     {
         $request->validate([
             'role' => 'nullable|string|in:admin,doctor,nurse,user',
+            'status' => 'nullable|string|in:Active,Retired',
         ]);
 
         $user->role = $request->role;
+        $user->status = $request->status;
         $user->save();
 
-        return response()->json(['message' => 'User role updated successfully']);
+        return response()->json(['message' => 'User updated successfully']);
     }
+
 
     public function storeStaff(Request $request)
     {
