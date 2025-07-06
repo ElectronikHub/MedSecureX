@@ -5,7 +5,6 @@ import StatsPanel from './Doctor/StatsPanel';
 import CurrentPatientPanel from './Doctor/CurrentPatientPanel';
 import UpcomingPatientsPanel from './Doctor/UpcomingPatientsPanel';
 import TimelinePanel from './Doctor/TimelinePanel';
-// import AssignDoctorForm from './Doctor/AssignDoctorForm'; // Uncomment if needed
 
 export default function DoctorDashboard({
     patientsToday,
@@ -14,7 +13,7 @@ export default function DoctorDashboard({
     isOnDuty,
     currentSchedule,
 }) {
-    // Split patients into current and upcoming
+    // Split patients into current and upcoming based on status
     const currentPatients = patientsToday.filter(p => p.status === 'Completed');
     const upcomingPatients = patientsToday.filter(p => p.status === 'Upcoming');
 
@@ -48,31 +47,14 @@ export default function DoctorDashboard({
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
                         <div>
+                            {/* Pass all today's patients here */}
                             <CurrentPatientPanel patients={patientsToday} />
                             <UpcomingPatientsPanel patients={upcomingPatients} />
                         </div>
                         <TimelinePanel timeline={timeline} />
                     </div>
                 </div>
-
-
             </main>
         </AuthenticatedLayout>
     );
 }
-
-// This component serves as the main dashboard for doctors, providing an overview of their patients and schedule.
-// It includes panels for current and upcoming patients, statistics, and a timeline of activities.
-// The `patientsToday` prop contains all patients scheduled for today, which are split into current and upcoming based on their status.
-// The `stats` prop provides various statistics related to the doctor's performance and patient care.
-// The `timeline` prop displays a chronological list of activities or events related to the doctor's schedule.
-// The `isOnDuty` prop indicates whether the doctor is currently on duty, which can be used to conditionally render certain features or messages.
-// The `currentSchedule` prop contains the doctor's current schedule, including their name and other relevant details.
-// The component uses a responsive grid layout to display the panels, ensuring a clean and organized presentation of information.
-// The `AuthenticatedLayout` component wraps the dashboard, providing a consistent layout with a header and footer.
-// The `Head` component sets the page title to "Doctor Dashboard" for better SEO and user experience.
-// The dashboard is designed to be user-friendly, with clear headings, statistics, and actionable items for the doctor to manage their patients effectively.
-// The component is styled using Tailwind CSS classes for a modern and responsive design, ensuring it looks good on both desktop and mobile devices.
-// The dashboard can be extended with additional features, such as patient management, appointment scheduling, and more, depending on the needs of the application and the doctor's workflow.
-
-
