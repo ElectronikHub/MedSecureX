@@ -69,7 +69,6 @@ export default function EditPatientModal({ patient, onClose, onSave }) {
         setLoading(true);
         setErrors({});
 
-        // Convert disease_categories string to JSON if possible
         let diseaseCategoriesJson = null;
         try {
             diseaseCategoriesJson = form.disease_categories ? JSON.parse(form.disease_categories) : null;
@@ -95,23 +94,31 @@ export default function EditPatientModal({ patient, onClose, onSave }) {
                 body: JSON.stringify(payload),
             });
 
-            let data = null;
-            try {
-                data = await response.json();
-            } catch {
-                alert('Server returned invalid JSON.');
+            if (!response.ok) {
+                // Try to parse error JSON
+                let errorData = {};
+                try {
+                    errorData = await response.json();
+                } catch {
+                    alert('Server returned an error and no JSON.');
+                    setLoading(false);
+                    return;
+                }
+
+                if (response.status === 422) {
+                    setErrors(errorData.errors || {});
+                } else {
+                    alert(errorData.message || 'An error occurred while updating the patient.');
+                }
                 setLoading(false);
                 return;
             }
 
-            if (response.ok) {
-                onSave(data.patient);
-                onClose();
-            } else if (response.status === 422) {
-                setErrors(data.errors || {});
-            } else {
-                alert(data.message || 'An error occurred while updating the patient.');
-            }
+            const data = await response.json();
+
+            // Update parent component with new patient data
+            onSave(data.patient);
+            onClose();
         } catch (error) {
             alert('Network error: Could not connect to the server.');
             console.error(error);
@@ -184,56 +191,6 @@ export default function EditPatientModal({ patient, onClose, onSave }) {
                         </div>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium">Disease Categories (JSON format)</label>
-                        <textarea
-                            name="disease_categories"
-                            value={form.disease_categories}
-                            onChange={handleChange}
-                            className={`w-full border rounded px-2 py-1 ${errors.disease_categories ? 'border-red-500' : ''}`}
-                            rows={3}
-                            disabled={loading}
-                        />
-                        {errors.disease_categories && <p className="text-red-600 text-xs mt-1">{errors.disease_categories[0]}</p>}
-                    </div>
-                    <div className="flex space-x-2">
-                        <div className="flex-1">
-                            <label className="block text-sm font-medium">Appointment Start Time</label>
-                            <input
-                                name="appointment_start_time"
-                                type="time"
-                                value={form.appointment_start_time}
-                                onChange={handleChange}
-                                className={`w-full border rounded px-2 py-1 ${errors.appointment_start_time ? 'border-red-500' : ''}`}
-                                disabled={loading}
-                            />
-                            {errors.appointment_start_time && <p className="text-red-600 text-xs mt-1">{errors.appointment_start_time[0]}</p>}
-                        </div>
-                        <div className="flex-1">
-                            <label className="block text-sm font-medium">Appointment End Time</label>
-                            <input
-                                name="appointment_end_time"
-                                type="time"
-                                value={form.appointment_end_time}
-                                onChange={handleChange}
-                                className={`w-full border rounded px-2 py-1 ${errors.appointment_end_time ? 'border-red-500' : ''}`}
-                                disabled={loading}
-                            />
-                            {errors.appointment_end_time && <p className="text-red-600 text-xs mt-1">{errors.appointment_end_time[0]}</p>}
-                        </div>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium">Appointment Date</label>
-                        <input
-                            name="appointment_date"
-                            type="date"
-                            value={form.appointment_date}
-                            onChange={handleChange}
-                            className={`w-full border rounded px-2 py-1 ${errors.appointment_date ? 'border-red-500' : ''}`}
-                            disabled={loading}
-                        />
-                        {errors.appointment_date && <p className="text-red-600 text-xs mt-1">{errors.appointment_date[0]}</p>}
-                    </div>
-                    <div>
                         <label className="block text-sm font-medium">Reason</label>
                         <textarea
                             name="reason"
@@ -303,6 +260,7 @@ export default function EditPatientModal({ patient, onClose, onSave }) {
                             {loading ? 'Saving...' : 'Save'}
                         </button>
                     </div>
+
                 </form>
             </div>
         </div>
