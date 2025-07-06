@@ -22,13 +22,14 @@ export default function PatientsPanel({
     const handleDelete = async (id) => {
         if (!window.confirm('Are you sure you want to delete this patient?')) return;
         try {
-            const response = await fetch(`/patients/${id}`, {
+            const response = await fetch(`/nurse/patients/${id}`, {
                 method: 'DELETE',
                 headers: {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
                     'Accept': 'application/json',
                 },
             });
+
             if (response.ok) {
                 alert('Patient deleted successfully!');
                 onDeletePatient(id);

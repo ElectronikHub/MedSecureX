@@ -219,9 +219,9 @@ class ManagementController extends Controller
     public function deletePatient(Patient $patient)
     {
         $patient->delete();
-
         return response()->json(['message' => 'Patient deleted successfully.']);
     }
+
 
     /**
      * Update user role and status
