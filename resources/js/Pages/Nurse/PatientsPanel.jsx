@@ -115,7 +115,7 @@ export default function PatientsPanel({ patients, onUpdatePatient, isOnDuty, doc
             <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-2">
                 <h3 className="font-semibold text-lg md:text-xl text-blue-700">Today's Patients</h3>
                 <div className="flex gap-2">
-                    <button className="px-3 py-1 bg-gray-100 rounded text-black hover:bg-gray-200 transition">Filter</button>
+                    {/* <button className="px-3 py-1 bg-gray-100 rounded text-black hover:bg-gray-200 transition">Filter</button> */}
                     <button
                         onClick={openAddModal}
                         className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
@@ -161,7 +161,7 @@ export default function PatientsPanel({ patients, onUpdatePatient, isOnDuty, doc
                             </div>
                         </div>
                         <div className="flex items-center space-x-2 mt-2 md:mt-0">
-                            <span
+                            {/* <span
                                 className={`text-xs font-semibold rounded px-2 py-1 ${p.statusColor === 'green'
                                         ? 'bg-green-100 text-green-700'
                                         : p.statusColor === 'yellow'
@@ -170,7 +170,7 @@ export default function PatientsPanel({ patients, onUpdatePatient, isOnDuty, doc
                                     }`}
                             >
                                 {p.status}
-                            </span>
+                            </span> */}
                             <button
                                 onClick={() => setEditingPatient(p)}
                                 className="ml-2 p-1 rounded hover:bg-blue-50"

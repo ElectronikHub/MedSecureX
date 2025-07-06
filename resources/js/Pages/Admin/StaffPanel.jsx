@@ -256,10 +256,10 @@ export default function StaffPanel({ doctors = [], nurses = [] }) {
                     </div>
                     <div className="text-sm text-gray-500">Current Ward: {person.ward || "N/A"}</div>
                     <div className="text-xs text-gray-400">Shift: {person.shift || "N/A"}</div>
-                    <div className="flex gap-2 mt-1">
+                    {/* <div className="flex gap-2 mt-1">
                         <button className="text-blue-600 text-xs underline">Edit Schedule</button>
                         <button className="text-blue-600 text-xs underline">Reassign</button>
-                    </div>
+                    </div> */}
                 </div>
             ))
         );
