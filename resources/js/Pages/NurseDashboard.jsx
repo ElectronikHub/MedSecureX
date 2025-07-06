@@ -7,15 +7,30 @@ import PatientsPanel from './Nurse/PatientsPanel';
 import SchedulePanel from './Nurse/SchedulePanel';
 import NotificationsPanel from './Nurse/NotificationsPanel';
 
-export default function NurseDashboard({ patients: initialPatients, schedule, stats, notifications, isOnDuty }) {
+export default function NurseDashboard({ patients: initialPatients, schedule, stats: initialStats, notifications, isOnDuty }) {
     // Manage patients state locally to support live updates
     const [patients, setPatients] = useState(initialPatients);
+    // Manage stats state locally for live CRUD
+    const [stats, setStats] = useState(initialStats);
 
     // Handler to update a patient in the local state after editing
     const handleUpdatePatient = (updatedPatient) => {
         setPatients((prevPatients) =>
             prevPatients.map((p) => (p.id === updatedPatient.id ? updatedPatient : p))
         );
+    };
+
+    // Stats CRUD Handlers
+    const handleAddStat = (newStat) => {
+        setStats(prev => [...prev, newStat]);
+    };
+
+    const handleUpdateStat = (updatedStat) => {
+        setStats(prev => prev.map(stat => stat.id === updatedStat.id ? updatedStat : stat));
+    };
+
+    const handleDeleteStat = (id) => {
+        setStats(prev => prev.filter(stat => stat.id !== id));
     };
 
     // Placeholder function for marking schedule items completed
@@ -42,7 +57,12 @@ export default function NurseDashboard({ patients: initialPatients, schedule, st
             <Head title="Nurse Dashboard" />
             <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
                 <WelcomePanel />
-                <StatsPanel stats={stats} />
+                <StatsPanel
+                    stats={stats}
+                    onAdd={handleAddStat}
+                    onUpdate={handleUpdateStat}
+                    onDelete={handleDeleteStat}
+                />
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div className="lg:col-span-2 space-y-6">
                         <PatientsPanel
