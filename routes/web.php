@@ -57,12 +57,14 @@ Route::middleware(['auth'])->group(function () {
     // Nurse routes
     Route::prefix('nurse')->name('nurse.')->group(function () {
         Route::get('/dashboard', [NurseManagement::class, 'dashboard'])->name('dashboard');
+    });
 
-        // Patient management for nurse
+    Route::prefix('nurse')->name('nurse.')->middleware('auth')->group(function () {
         Route::post('/patients', [NurseManagement::class, 'storePatient'])->name('patients.store');
         Route::put('/patients/{patient}', [NurseManagement::class, 'updatePatient'])->name('patients.update');
-        Route::delete('/nurse/patients/{patient}', [NurseManagement::class, 'deletePatient'])->name('patients.delete');
+        Route::delete('/patients/{patient}', [NurseManagement::class, 'deletePatient'])->name('patients.delete');
     });
+
 
     // Doctor routes
     Route::prefix('doctor')->name('doctor.')->group(function () {
