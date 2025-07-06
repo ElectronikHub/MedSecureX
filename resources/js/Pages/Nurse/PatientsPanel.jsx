@@ -176,16 +176,16 @@ export default function PatientsPanel({ patients, onUpdatePatient, isOnDuty, doc
                             </div>
                         </div>
                         <div className="flex items-center space-x-2 mt-2 md:mt-0">
-                            {/* <span
+                            <span
                                 className={`text-xs font-semibold rounded px-2 py-1 ${p.statusColor === 'green'
-                                        ? 'bg-green-100 text-green-700'
-                                        : p.statusColor === 'yellow'
-                                            ? 'bg-yellow-100 text-yellow-700'
-                                            : 'bg-blue-100 text-blue-700'
+                                    ? 'bg-green-100 text-green-700'
+                                    : p.statusColor === 'yellow'
+                                        ? 'bg-yellow-100 text-yellow-700'
+                                        : 'bg-blue-100 text-blue-700'
                                     }`}
                             >
                                 {p.status}
-                            </span> */}
+                            </span>
                             <button
                                 onClick={() => setEditingPatient(p)}
                                 className="ml-2 p-1 rounded hover:bg-blue-50"
