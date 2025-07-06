@@ -1,19 +1,15 @@
 import React, { useState, useMemo } from "react";
 
-export default function ScheduleTable({ schedules, onEdit }) {
-    // Get today's date in YYYY-MM-DD format
+export default function ScheduleTable({ schedules, onEdit, onAdd }) {
     const today = new Date().toISOString().slice(0, 10);
 
-    // Gather unique roles and departments for filter dropdowns
     const uniqueRoles = Array.from(new Set(schedules.map(s => s.role))).filter(Boolean);
     const uniqueDepartments = Array.from(new Set(schedules.map(s => s.department))).filter(Boolean);
 
-    // Filter state
     const [filterDate, setFilterDate] = useState(today);
     const [filterRole, setFilterRole] = useState("");
     const [filterDept, setFilterDept] = useState("");
 
-    // Filtering logic
     const filteredSchedules = useMemo(() => {
         return schedules.filter(s =>
             (!filterDate || s.shift_date === filterDate) &&
@@ -24,8 +20,15 @@ export default function ScheduleTable({ schedules, onEdit }) {
 
     return (
         <div className="bg-white rounded-lg shadow p-4 mt-8">
-            <h3 className="text-lg font-semibold mb-4">Staff Schedules</h3>
-            {/* Advanced Filtering Controls */}
+            <h3 className="text-lg font-semibold mb-4 flex justify-between items-center">
+                Staff Schedules
+                <button
+                    onClick={onAdd}
+                    className="px-3 py-1 bg-green-600 text-white rounded text-sm"
+                >
+                    + Add Schedule
+                </button>
+            </h3>
             <div className="flex flex-wrap gap-4 mb-4">
                 <div>
                     <label className="text-xs text-gray-600 block mb-1">Date</label>
@@ -62,7 +65,6 @@ export default function ScheduleTable({ schedules, onEdit }) {
                         ))}
                     </select>
                 </div>
-                {/* Reset Filters Button */}
                 <div className="flex items-end">
                     <button
                         className="ml-2 px-3 py-1 bg-gray-200 rounded text-xs"
@@ -76,7 +78,6 @@ export default function ScheduleTable({ schedules, onEdit }) {
                     </button>
                 </div>
             </div>
-            {/* Table */}
             <table className="w-full text-sm border-collapse">
                 <thead>
                     <tr>

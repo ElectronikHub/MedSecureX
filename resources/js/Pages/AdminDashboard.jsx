@@ -1,4 +1,3 @@
-// resources/js/Pages/AdminDashboard.jsx
 import React, { useState } from "react";
 import { Head } from "@inertiajs/react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
@@ -6,14 +5,42 @@ import StatCard from "./Admin/StatCard";
 import StaffPanel from "./Admin/StaffPanel";
 import ScheduleTable from "./Admin/ScheduleTable";
 import EditScheduleModal from "./Admin/EditScheduleModal";
-import UsersPanel from "./Admin/UsersPanel"; // Make sure this is imported
+import UsersPanel from "./Admin/UsersPanel";
 
-export default function AdminDashboard({ stats, doctors, nurses, schedules, allUsers }) { // Make sure allUsers is destructured
+export default function AdminDashboard({ stats, doctors, nurses, schedules, allUsers }) {
     const [editingSchedule, setEditingSchedule] = useState(null);
+    const [scheduleList, setScheduleList] = useState(schedules);
 
-    const handleSaveSchedule = (id, form) => {
-        // Implement save logic (e.g., Inertia.post/put)
-        setEditingSchedule(null);
+    // Save schedule to backend (update)
+    const handleSaveSchedule = async (id, form) => {
+        try {
+            const response = await fetch(`/admin/schedules/${id}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').getAttribute("content"),
+                    Accept: "application/json",
+                },
+                body: JSON.stringify(form),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || "Failed to update schedule");
+            }
+
+            const data = await response.json();
+
+            // Update local schedule list with updated schedule
+            setScheduleList((prev) =>
+                prev.map((sch) => (sch.id === id ? data.schedule : sch))
+            );
+
+            alert(data.message);
+            setEditingSchedule(null);
+        } catch (error) {
+            alert(error.message);
+        }
     };
 
     return (
@@ -22,7 +49,6 @@ export default function AdminDashboard({ stats, doctors, nurses, schedules, allU
             <div className="min-h-screen bg-[#f4f8fe] dark:bg-gray-900 flex flex-col transition-colors duration-500">
                 <main className="p-6 flex-1 flex flex-col items-center justify-center">
                     <div className="w-full max-w-6xl mx-auto">
-                        {/* Existing dashboard content */}
                         <h1 className="text-3xl font-extrabold text-gray-900 dark:text-gray-100 mb-2">
                             Admin Dashboard
                         </h1>
@@ -34,16 +60,15 @@ export default function AdminDashboard({ stats, doctors, nurses, schedules, allU
                             <StatCard title="Total Patients" value={stats.totalPatients} color="text-purple-600" />
                         </div>
                         <StaffPanel doctors={doctors} nurses={nurses} />
-                        <ScheduleTable schedules={schedules} onEdit={setEditingSchedule} />
+                        <ScheduleTable schedules={scheduleList} onEdit={setEditingSchedule} />
                         {editingSchedule && (
                             <EditScheduleModal
                                 schedule={editingSchedule}
                                 onClose={() => setEditingSchedule(null)}
                                 onSave={handleSaveSchedule}
+                                users={[...doctors, ...nurses]} // Pass users for assigning schedule if needed
                             />
                         )}
-
-                        {/* Render the UsersPanel */}
                         <UsersPanel users={allUsers} />
                     </div>
                 </main>
