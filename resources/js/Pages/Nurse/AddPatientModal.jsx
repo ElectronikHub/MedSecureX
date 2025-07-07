@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-export default function AddPatientModal({ open, onClose, doctors, nurses, onAddPatient }) {
+export default function AddPatientModal({ open, onClose, doctors, nurses, onAddPatient, userRole = 'nurse' }) {
     const [form, setForm] = useState({
         name: '',
         patient_code: '',
@@ -52,10 +52,11 @@ export default function AddPatientModal({ open, onClose, doctors, nurses, onAddP
         setLoading(true);
         setErrors({});
 
-        console.log('Submitting patient:', form); // Debug payload
-
         try {
-            const response = await fetch('/patients', { // Adjust URL to your route
+            // Adjust URL based on user role prefix (nurse or doctor)
+            const url = `/${userRole}/patients`;
+
+            const response = await fetch(url, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -182,7 +183,7 @@ export default function AddPatientModal({ open, onClose, doctors, nurses, onAddP
                     <option value="">Select a doctor</option>
                     {doctors.map((doc) => (
                         <option key={doc.id} value={doc.id}>
-                            {doc.name} ({doc.dept})
+                            {doc.name} {doc.dept ? `(${doc.dept})` : ''}
                         </option>
                     ))}
                 </select>
@@ -199,7 +200,7 @@ export default function AddPatientModal({ open, onClose, doctors, nurses, onAddP
                     <option value="">Select a nurse</option>
                     {nurses.map((nurse) => (
                         <option key={nurse.id} value={nurse.id}>
-                            {nurse.name} ({nurse.dept})
+                            {nurse.name} {nurse.dept ? `(${nurse.dept})` : ''}
                         </option>
                     ))}
                 </select>
