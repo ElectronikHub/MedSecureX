@@ -6,8 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Patient extends Model
 {
-    // app/Models/Patient.php
-
+    // Mass assignable attributes
     protected $fillable = [
         'initials',
         'name',
@@ -24,20 +23,30 @@ class Patient extends Model
         'admitted',
         'admission_timestamp',
         'discharge_timestamp',
-        'doctor_id',      // <-- Add this
-        'nurse_id',       // <-- And this
+        'doctor_id',
+        'nurse_id',
     ];
 
-    protected $dates = [
-        'appointment_start_time',
-        'appointment_end_time',
-        'appointment_date',
-        'admission_timestamp',
-        'discharge_timestamp',
-        'created_at',
-        'updated_at',
+    // Cast attributes to native types
+    protected $casts = [
+        'appointment_start_time' => 'datetime:H:i:s',
+        'appointment_end_time' => 'datetime:H:i:s',
+        'appointment_date' => 'date',
+        'admission_timestamp' => 'datetime',
+        'discharge_timestamp' => 'datetime',
+        'admitted' => 'boolean',
     ];
 
+    // Optional: Define relationships if needed
+    /*
+    public function doctor()
+    {
+        return $this->belongsTo(User::class, 'doctor_id');
+    }
+
+    public function nurse()
+    {
+        return $this->belongsTo(User::class, 'nurse_id');
+    }
+    */
 }
-
-// Note: Ensure that the Patient model is linked to the User model via doctor_id if needed.
