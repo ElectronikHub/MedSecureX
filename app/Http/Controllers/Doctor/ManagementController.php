@@ -103,10 +103,23 @@ class ManagementController extends Controller
 
         // Example timeline (customize as needed)
         $timeline = [
-            ['time' => '8:00 AM', 'event' => 'Morning briefing'],
-            ['time' => '9:00 AM', 'event' => 'Patient: John Doe - Routine Checkup'],
-            ['time' => '10:30 AM', 'event' => 'Patient: Jane Smith - Follow-up'],
+            ['time' => '7:30 AM', 'event' => 'Arrive at clinic, review patient charts'],
+            ['time' => '8:00 AM', 'event' => 'Morning briefing with medical team'],
+            ['time' => '8:30 AM', 'event' => 'Patient: Michael Johnson - Annual Physical Exam'],
+            ['time' => '9:15 AM', 'event' => 'Patient: Sarah Lee - Follow-up on lab results'],
+            ['time' => '10:00 AM', 'event' => 'Patient: David Kim - Consultation for chronic pain'],
+            ['time' => '10:45 AM', 'event' => 'Coffee break / Emails'],
+            ['time' => '11:00 AM', 'event' => 'Patient: Emily Davis - New patient intake'],
+            ['time' => '11:45 AM', 'event' => 'Administrative tasks / Documentation'],
+            ['time' => '12:30 PM', 'event' => 'Lunch break'],
+            ['time' => '1:30 PM', 'event' => 'Patient: Robert Brown - Post-surgery checkup'],
+            ['time' => '2:15 PM', 'event' => 'Patient: Lisa Wong - Routine blood pressure check'],
+            ['time' => '3:00 PM', 'event' => 'Team meeting / Case discussions'],
+            ['time' => '3:30 PM', 'event' => 'Patient: Mark Wilson - Medication review'],
+            ['time' => '4:15 PM', 'event' => 'Patient: Anna Garcia - Vaccination appointment'],
+            ['time' => '5:00 PM', 'event' => 'Wrap up, finalize notes, prepare for next day'],
         ];
+
 
         // Example: Assume doctor is on duty (adjust as needed)
         $isOnDuty = true;
