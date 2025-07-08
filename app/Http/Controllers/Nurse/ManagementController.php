@@ -11,6 +11,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Log;
+
 
 class ManagementController extends Controller
 {
@@ -115,25 +117,44 @@ class ManagementController extends Controller
 
     public function storePatient(Request $request)
     {
+
+
+        // Validate incoming request data
         $validated = $request->validate([
             'initials' => ['nullable', 'string', 'max:4'], // optional, max 4 chars
             'name' => ['required', 'string', 'max:255'],
             'patient_code' => ['required', 'string', 'max:255', 'unique:patients,patient_code'],
-            'age' => ['required', 'integer', 'min:0', 'max:255'], // unsignedTinyInteger max 255
+            'age' => ['required', 'integer', 'min:0', 'max:255'],
             'gender' => ['required', 'string', Rule::in(['Male', 'Female', 'Other'])],
             'disease_categories' => ['nullable', 'json'],
             'appointment_start_time' => ['nullable', 'date_format:H:i:s'],
             'appointment_end_time' => ['nullable', 'date_format:H:i:s'],
             'appointment_date' => ['nullable', 'date'],
-            'reason' => ['nullable', 'string', 'max:255'], // string default length 255
+            'reason' => ['nullable', 'string', 'max:255'],
             'status' => ['nullable', 'string', Rule::in(['Completed', 'Upcoming'])],
             'room' => ['nullable', 'string', 'max:255'],
-            'admitted' => ['boolean'],
+            'admitted' => ['sometimes', 'boolean'], // sometimes allows missing field
             'admission_timestamp' => ['nullable', 'date'],
             'discharge_timestamp' => ['nullable', 'date'],
-            'doctor_id' => ['nullable', 'exists:users,id'],
-            'nurse_id' => ['nullable', 'exists:users,id'],
+            'doctor_id' => ['required', 'exists:users,id'], // Make required to ensure presence
+            'nurse_id' => ['required', 'exists:users,id'],  // Same here
         ]);
+
+        Log::info('Validated patient data before saving:', $validated);
+
+
+        // Debug log to verify received IDs
+        Log::info('Storing patient with doctor_id and nurse_id', [
+            'doctor_id' => $validated['doctor_id'],
+            'nurse_id' => $validated['nurse_id'],
+        ]);
+
+        // Convert empty strings to null (if any)
+        // $validated['doctor_id'] = $validated['doctor_id'] ?: null;
+        // $validated['nurse_id'] = $validated['nurse_id'] ?: null;
+
+        // Ensure admitted is boolean false if not set
+        $validated['admitted'] = isset($validated['admitted']) ? (bool) $validated['admitted'] : false;
 
         // Generate initials if missing
         if (empty($validated['initials'])) {
@@ -142,7 +163,7 @@ class ManagementController extends Controller
             foreach ($names as $n) {
                 $initials .= strtoupper(substr($n, 0, 1));
             }
-            $validated['initials'] = substr($initials, 0, 4); // max 4 chars
+            $validated['initials'] = substr($initials, 0, 4);
         }
 
         // Set default status if not provided
@@ -158,14 +179,22 @@ class ManagementController extends Controller
             $validated['appointment_end_time'] = '09:30:00';
         }
 
-        if (!empty($validated['admitted']) && empty($validated['admission_timestamp'])) {
+        // Set admission timestamp if admitted and no timestamp provided
+        if ($validated['admitted'] && empty($validated['admission_timestamp'])) {
             $validated['admission_timestamp'] = Carbon::now();
         }
 
+        // Create the patient record
         $patient = Patient::create($validated);
 
-        return response()->json(['message' => 'Patient created successfully.', 'patient' => $patient], 201);
+        return response()->json([
+            'message' => 'Patient created successfully.',
+            'patient' => $patient,
+            'validated_data' => $validated, // Add this line
+        ], 201);
+
     }
+
 
     public function updatePatient(Request $request, Patient $patient)
     {

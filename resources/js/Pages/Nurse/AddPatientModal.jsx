@@ -53,7 +53,6 @@ export default function AddPatientModal({ open, onClose, doctors, nurses, onAddP
         setErrors({});
 
         try {
-            // Adjust URL based on user role prefix (nurse or doctor)
             const url = `/${userRole}/patients`;
 
             const response = await fetch(url, {
@@ -67,6 +66,7 @@ export default function AddPatientModal({ open, onClose, doctors, nurses, onAddP
             });
 
             const data = await response.json();
+            console.log('Response data:', data); // Debug backend response
 
             if (response.ok) {
                 alert('Patient added successfully!');
@@ -87,9 +87,9 @@ export default function AddPatientModal({ open, onClose, doctors, nurses, onAddP
     if (!open) return null;
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-            <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow max-w-md w-full space-y-4">
-                <h2 className="text-xl font-semibold">Add New Patient</h2>
+        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50" role="dialog" aria-modal="true" aria-labelledby="add-patient-title">
+            <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow max-w-md w-full space-y-4" noValidate>
+                <h2 id="add-patient-title" className="text-xl font-semibold">Add New Patient</h2>
 
                 <input
                     type="text"
@@ -97,10 +97,12 @@ export default function AddPatientModal({ open, onClose, doctors, nurses, onAddP
                     placeholder="Patient Name"
                     value={form.name}
                     onChange={handleChange}
-                    className="w-full border rounded px-3 py-2"
+                    className={`w-full border rounded px-3 py-2 ${errors.name ? 'border-red-600' : ''}`}
                     required
+                    aria-invalid={errors.name ? 'true' : 'false'}
+                    aria-describedby={errors.name ? 'error-name' : undefined}
                 />
-                {errors.name && <p className="text-red-600 text-sm">{errors.name}</p>}
+                {errors.name && <p id="error-name" className="text-red-600 text-sm">{errors.name}</p>}
 
                 <input
                     type="text"
@@ -108,6 +110,7 @@ export default function AddPatientModal({ open, onClose, doctors, nurses, onAddP
                     value={form.patient_code}
                     readOnly
                     className="w-full border rounded px-3 py-2 bg-gray-100"
+                    aria-readonly="true"
                 />
 
                 <input
@@ -116,24 +119,30 @@ export default function AddPatientModal({ open, onClose, doctors, nurses, onAddP
                     placeholder="Age"
                     value={form.age}
                     onChange={handleChange}
-                    className="w-full border rounded px-3 py-2"
+                    className={`w-full border rounded px-3 py-2 ${errors.age ? 'border-red-600' : ''}`}
                     required
+                    min="0"
+                    max="255"
+                    aria-invalid={errors.age ? 'true' : 'false'}
+                    aria-describedby={errors.age ? 'error-age' : undefined}
                 />
-                {errors.age && <p className="text-red-600 text-sm">{errors.age}</p>}
+                {errors.age && <p id="error-age" className="text-red-600 text-sm">{errors.age}</p>}
 
                 <select
                     name="gender"
                     value={form.gender}
                     onChange={handleChange}
-                    className="w-full border rounded px-3 py-2"
+                    className={`w-full border rounded px-3 py-2 ${errors.gender ? 'border-red-600' : ''}`}
                     required
+                    aria-invalid={errors.gender ? 'true' : 'false'}
+                    aria-describedby={errors.gender ? 'error-gender' : undefined}
                 >
                     <option value="">Select Gender</option>
                     <option value="Male">Male</option>
                     <option value="Female">Female</option>
                     <option value="Other">Other</option>
                 </select>
-                {errors.gender && <p className="text-red-600 text-sm">{errors.gender}</p>}
+                {errors.gender && <p id="error-gender" className="text-red-600 text-sm">{errors.gender}</p>}
 
                 <input
                     type="text"
@@ -172,30 +181,36 @@ export default function AddPatientModal({ open, onClose, doctors, nurses, onAddP
                     Admitted
                 </label>
 
-                <label className="block font-semibold">Assign Doctor</label>
+                <label htmlFor="doctor-select" className="block font-semibold mt-4">Assign Doctor</label>
                 <select
+                    id="doctor-select"
                     name="doctor_id"
                     value={form.doctor_id}
                     onChange={handleChange}
-                    className="w-full border rounded px-3 py-2"
+                    className={`w-full border rounded px-3 py-2 ${errors.doctor_id ? 'border-red-600' : ''}`}
                     required
+                    aria-invalid={errors.doctor_id ? 'true' : 'false'}
+                    aria-describedby={errors.doctor_id ? 'error-doctor' : undefined}
                 >
                     <option value="">Select a doctor</option>
                     {doctors.map((doc) => (
                         <option key={doc.id} value={doc.id}>
-                            {doc.name} {doc.dept ? `(${doc.dept})` : ''}
+                            {doc.name}
                         </option>
                     ))}
                 </select>
-                {errors.doctor_id && <p className="text-red-600 text-sm">{errors.doctor_id}</p>}
+                {errors.doctor_id && <p id="error-doctor" className="text-red-600 text-sm">{errors.doctor_id}</p>}
 
-                <label className="block font-semibold">Assign Nurse</label>
+                <label htmlFor="nurse-select" className="block font-semibold mt-4">Assign Nurse</label>
                 <select
+                    id="nurse-select"
                     name="nurse_id"
                     value={form.nurse_id}
                     onChange={handleChange}
-                    className="w-full border rounded px-3 py-2"
+                    className={`w-full border rounded px-3 py-2 ${errors.nurse_id ? 'border-red-600' : ''}`}
                     required
+                    aria-invalid={errors.nurse_id ? 'true' : 'false'}
+                    aria-describedby={errors.nurse_id ? 'error-nurse' : undefined}
                 >
                     <option value="">Select a nurse</option>
                     {nurses.map((nurse) => (
@@ -204,9 +219,9 @@ export default function AddPatientModal({ open, onClose, doctors, nurses, onAddP
                         </option>
                     ))}
                 </select>
-                {errors.nurse_id && <p className="text-red-600 text-sm">{errors.nurse_id}</p>}
+                {errors.nurse_id && <p id="error-nurse" className="text-red-600 text-sm">{errors.nurse_id}</p>}
 
-                <div className="flex justify-end gap-2">
+                <div className="flex justify-end gap-2 mt-6">
                     <button
                         type="button"
                         onClick={onClose}
@@ -217,7 +232,7 @@ export default function AddPatientModal({ open, onClose, doctors, nurses, onAddP
                     </button>
                     <button
                         type="submit"
-                        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
                         disabled={loading}
                     >
                         {loading ? 'Saving...' : 'Add Patient'}

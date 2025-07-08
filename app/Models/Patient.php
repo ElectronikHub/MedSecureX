@@ -6,19 +6,28 @@ use Illuminate\Database\Eloquent\Model;
 
 class Patient extends Model
 {
+    // app/Models/Patient.php
+
     protected $fillable = [
+        'initials',
         'name',
         'patient_code',
         'age',
         'gender',
+        'disease_categories',
         'appointment_start_time',
         'appointment_end_time',
+        'appointment_date',
         'reason',
         'status',
         'room',
         'admitted',
-        'initials'
+        'admission_timestamp',
+        'discharge_timestamp',
+        'doctor_id',      // <-- Add this
+        'nurse_id',       // <-- And this
     ];
+
     protected $dates = [
         'appointment_start_time',
         'appointment_end_time',
