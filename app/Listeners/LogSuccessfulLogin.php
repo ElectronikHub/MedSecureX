@@ -29,14 +29,18 @@ class LogSuccessfulLogin
             } else {
                 $roleCapitalized = ucfirst($user->role);
                 $timeFormatted = $now->format('g:ia');
-                $remark = "{$roleCapitalized}_{$user->id} attempted access outside assigned duty hours at {$timeFormatted}.";
+
+                // Use the user's name instead of ID
+                $userNameSanitized = str_replace(' ', ' ', $user->name); // Replace spaces with underscores for readability
+
+                $remark = "{$roleCapitalized} {$userNameSanitized} attempted access outside assigned duty hours at {$timeFormatted}.";
             }
         }
 
         UserLoginLog::create([
             'user_id' => $user->id,
             'ip_address' => request()->ip(),
-            'user_agent' => request()->userAgent(), // keep saving user_agent
+            'user_agent' => request()->userAgent(),
             'logged_in_at' => $now,
             'duty_status' => $dutyStatus,
             'remark' => $remark,
