@@ -6,84 +6,76 @@ use App\Http\Controllers\Controller;
 use Inertia\Inertia;
 use App\Models\Patient;
 use Illuminate\Support\Facades\Auth;
-use Carbon\Carbon;
+use Illuminate\Support\Collection;
 
 class ManagementController extends Controller
 {
     /**
      * Fetch all patients assigned to the authenticated doctor.
      *
-     * @return \Illuminate\Support\Collection
+     * @return Collection
      */
-    public function getAllPatients()
+    public function getAllPatients(): Collection
     {
         $doctorId = Auth::id();
 
-        return Patient::where('doctor_id', $doctorId)
-            ->get()
-            ->map(function ($patient) {
-                $startTime = $patient->appointment_start_time
-                    ? Carbon::parse($patient->appointment_start_time)->format('h:i A')
-                    : null;
-                $endTime = $patient->appointment_end_time
-                    ? Carbon::parse($patient->appointment_end_time)->format('h:i A')
-                    : null;
+        $patients = Patient::where('doctor_id', $doctorId)->get();
 
-                return [
-                    'id' => $patient->id,
-                    'name' => $patient->name,
-                    'appointment_time' => $startTime && $endTime ? $startTime . ' - ' . $endTime : 'N/A',
-                    'reason' => $patient->reason,
-                    'admission_status' => $patient->admitted == 1 ? 'Admitted' : 'Not Admitted',
-                    'status' => $patient->status,
-                    'room' => $patient->room ?? 'N/A',
-                    'admission_timestamp' => $patient->admission_timestamp ? $patient->admission_timestamp->toDateTimeString() : 'Unknown',
-                ];
-            });
+        return $this->formatPatients($patients);
     }
 
     /**
      * Fetch only admitted patients assigned to the authenticated doctor.
      *
-     * @return \Illuminate\Support\Collection
+     * @return Collection
      */
-    public function getAdmittedPatients()
+    public function getAdmittedPatients(): Collection
     {
         $doctorId = Auth::id();
 
-        return Patient::where('doctor_id', $doctorId)
-            ->where('admitted', 1) // admitted = 1 means admitted
-            ->get()
-            ->map(function ($patient) {
-                $startTime = $patient->appointment_start_time
-                    ? Carbon::parse($patient->appointment_start_time)->format('h:i A')
-                    : null;
-                $endTime = $patient->appointment_end_time
-                    ? Carbon::parse($patient->appointment_end_time)->format('h:i A')
-                    : null;
+        $patients = Patient::where('doctor_id', $doctorId)
+            ->where('admitted', 1)
+            ->get();
 
-                return [
-                    'id' => $patient->id,
-                    'name' => $patient->name,
-                    'appointment_time' => $startTime && $endTime ? $startTime . ' - ' . $endTime : 'N/A',
-                    'reason' => $patient->reason,
-                    'admission_status' => 'Admitted',
-                    'status' => $patient->status,
-                    'room' => $patient->room ?? 'N/A',
-                    'admission_timestamp' => $patient->admission_timestamp ? $patient->admission_timestamp->toDateTimeString() : 'Unknown',
-                ];
-            });
+        return $this->formatPatients($patients, true);
     }
 
     /**
-     * Example dashboard method demonstrating usage.
+     * Format patients collection for frontend consumption.
+     *
+     * @param Collection $patients
+     * @param bool $forceAdmittedLabel Set admission_status to 'Admitted' regardless of actual value
+     * @return Collection
+     */
+    private function formatPatients(Collection $patients, bool $forceAdmittedLabel = false): Collection
+    {
+        return $patients->map(function ($patient) use ($forceAdmittedLabel) {
+            $startTime = $patient->appointment_start_time?->format('h:i A');
+            $endTime = $patient->appointment_end_time?->format('h:i A');
+
+            return [
+                'id' => $patient->id,
+                'name' => $patient->name,
+                'appointment_time' => $startTime && $endTime ? "$startTime - $endTime" : 'N/A',
+                'reason' => $patient->reason ?? 'N/A',
+                'admission_status' => $forceAdmittedLabel ? 'Admitted' : ($patient->admitted == 1 ? 'Admitted' : 'Not Admitted'),
+                'status' => $patient->status ?? 'Unknown',
+                'room' => $patient->room ?? 'N/A',
+                'admission_timestamp' => $patient->admission_timestamp?->toDateTimeString() ?? 'Unknown',
+            ];
+        });
+    }
+
+    /**
+     * Render the doctor dashboard with necessary data.
+     *
+     * @return \Inertia\Response
      */
     public function dashboard()
     {
         $patientsToday = $this->getAllPatients();
         $admittedPatients = $this->getAdmittedPatients();
 
-        // Example stats (customize as needed)
         $stats = [
             [
                 'label' => 'Patients Today',
@@ -101,7 +93,6 @@ class ManagementController extends Controller
             ],
         ];
 
-        // Example timeline (customize as needed)
         $timeline = [
             ['time' => '7:30 AM', 'event' => 'Arrive at clinic, review patient charts'],
             ['time' => '8:00 AM', 'event' => 'Morning briefing with medical team'],
@@ -120,8 +111,6 @@ class ManagementController extends Controller
             ['time' => '5:00 PM', 'event' => 'Wrap up, finalize notes, prepare for next day'],
         ];
 
-
-        // Example: Assume doctor is on duty (adjust as needed)
         $isOnDuty = true;
         $currentSchedule = ['user' => ['name' => Auth::user()->name]];
 

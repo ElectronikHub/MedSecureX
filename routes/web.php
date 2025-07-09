@@ -26,23 +26,23 @@ Route::get('/', function () {
     ]);
 });
 
-// Default dashboard route
+// Default dashboard route for authenticated and verified users
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-// Profile routes (authenticated users)
+// Profile routes for authenticated users
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-// Role-based dashboards & user management routes (authenticated users)
+// Role-based dashboards and management routes for authenticated users
 Route::middleware(['auth'])->group(function () {
 
-    // Admin routes
-    Route::prefix('admin')->name('admin.')->group(function () {
+    // Admin routes - accessible only by users with 'admin' role
+    Route::prefix('admin')->name('admin.')->middleware('role:admin')->group(function () {
         Route::get('/dashboard', [AdminManagement::class, 'dashboard'])->name('dashboard');
 
         // User role management
@@ -54,8 +54,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/schedules', [AdminManagement::class, 'updateOrCreateSchedule'])->name('schedules.store');
     });
 
-    // Nurse routes
-    Route::prefix('nurse')->name('nurse.')->group(function () {
+    // Nurse routes - accessible only by users with 'nurse' role
+    Route::prefix('nurse')->name('nurse.')->middleware('role:nurse')->group(function () {
         Route::get('/dashboard', [NurseManagement::class, 'dashboard'])->name('dashboard');
 
         // Patient management
@@ -64,8 +64,8 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/patients/{patient}', [NurseManagement::class, 'deletePatient'])->name('patients.delete');
     });
 
-    // Doctor routes
-    Route::prefix('doctor')->name('doctor.')->group(function () {
+    // Doctor routes - accessible only by users with 'doctor' role
+    Route::prefix('doctor')->name('doctor.')->middleware('role:doctor')->group(function () {
         Route::get('/dashboard', [DoctorManagement::class, 'dashboard'])->name('dashboard');
         // Add doctor-specific routes here as needed
     });
@@ -88,7 +88,7 @@ Route::middleware(['auth'])->group(function () {
     })->name('api.patients.byCode');
 });
 
-// Legacy API route for patient info by ID
+// Legacy API route for patient info by ID (public)
 Route::get('/api/patients/{id}', function ($id) {
     $patient = Patient::find($id);
     if (!$patient) {
@@ -97,4 +97,5 @@ Route::get('/api/patients/{id}', function ($id) {
     return response()->json($patient);
 });
 
+// Auth routes (login, registration, password reset, etc.)
 require __DIR__ . '/auth.php';

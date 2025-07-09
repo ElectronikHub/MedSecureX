@@ -8,223 +8,129 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use App\Models\User;
-use App\Models\Patient;
 use App\Models\Schedule;
+use App\Models\UserLoginLog;
 
 class ManagementController extends Controller
 {
     public function dashboard()
     {
+        // Aggregate counts
         $totalUsers = User::count();
         $totalDoctors = User::where('role', 'doctor')->count();
         $totalNurses = User::where('role', 'nurse')->count();
-        $totalPatients = Patient::count();
 
+        // Status colors mapping
         $statusColors = [
             'Active' => 'bg-green-100 text-green-700',
             'On Break' => 'bg-yellow-100 text-yellow-700',
             'Off Duty' => 'bg-gray-100 text-gray-700',
         ];
 
+        // Fetch doctors with mapped data
         $doctors = User::where('role', 'doctor')
             ->get()
-            ->map(function ($doctor) use ($statusColors) {
-                $initials = collect(explode(' ', $doctor->name))
-                    ->map(fn($n) => strtoupper(substr($n, 0, 1)))
-                    ->join('');
-                $status = $doctor->status ?? 'Active';
-                return [
-                    'id' => $doctor->id,
-                    'initials' => $initials,
-                    'name' => $doctor->name,
-                    'dept' => $doctor->department ?? 'Unknown',
-                    'status' => $status,
-                    'ward' => $doctor->ward ?? 'Not Assigned',
-                    'shift' => $doctor->shift ?? 'Not Assigned',
-                    'statusColor' => $statusColors[$status] ?? 'bg-gray-100 text-gray-700',
-                ];
-            })->values();
+            ->map(fn($doctor) => $this->mapUserWithStatus($doctor, $statusColors))
+            ->values();
 
+        // Fetch nurses with mapped data
         $nurses = User::where('role', 'nurse')
             ->get()
-            ->map(function ($nurse) use ($statusColors) {
-                $initials = collect(explode(' ', $nurse->name))
-                    ->map(fn($n) => strtoupper(substr($n, 0, 1)))
-                    ->join('');
-                $status = $nurse->status ?? 'Active';
+            ->map(fn($nurse) => $this->mapUserWithStatus($nurse, $statusColors))
+            ->values();
+
+        // Fetch schedules with eager-loaded user info
+        $schedules = Schedule::with('user')->get()->map(function ($schedule) {
+            return [
+                'id' => $schedule->id,
+                'user_id' => $schedule->user_id,
+                'user_name' => $schedule->user->name ?? '',
+                'role' => $schedule->user->role ?? '',
+                'department' => $schedule->user->department ?? '',
+                'shift_date' => $schedule->shift_date,
+                'start_time' => $schedule->start_time,
+                'end_time' => $schedule->end_time,
+            ];
+        });
+
+        // Fetch all users with status colors
+        $allUsers = User::all()->map(fn($user) => [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'role' => $user->role,
+            'status' => $user->status ?? 'Active',
+            'statusColor' => $statusColors[$user->status ?? 'Active'] ?? 'bg-gray-100 text-gray-700',
+        ]);
+
+        // Fetch recent login logs with user, filter and map as per requirements
+        $loginLogs = UserLoginLog::with('user')
+            ->latest('logged_in_at')
+            ->limit(50)
+            ->get()
+            ->filter(function ($log) {
+                // Exclude logs where user is admin AND duty_status is 'On Duty'
+                return !($log->user && $log->user->role === 'admin' && $log->duty_status === 'On Duty');
+            })
+            ->map(function ($log) {
+                $user = $log->user;
+
+                // For admins, set duty_status to 'N/A' and remark to null
+                $dutyStatus = ($user && $user->role === 'admin') ? 'N/A' : ($log->duty_status ?? 'N/A');
+                $remark = ($user && $user->role === 'admin') ? null : $log->remark;
+
                 return [
-                    'id' => $nurse->id,
-                    'initials' => $initials,
-                    'name' => $nurse->name,
-                    'dept' => $nurse->department ?? 'Unknown',
-                    'status' => $status,
-                    'ward' => $nurse->ward ?? 'Not Assigned',
-                    'shift' => $nurse->shift ?? 'Not Assigned',
-                    'statusColor' => $statusColors[$status] ?? 'bg-gray-100 text-gray-700',
+                    'id' => $log->id,
+                    'user' => ['name' => $user->name ?? 'Unknown', 'role' => $user->role ?? ''],
+                    'ip_address' => $log->ip_address,
+                    // 'user_agent' => $log->user_agent, // excluded from frontend
+                    'logged_in_at' => $log->logged_in_at->toDateTimeString(),
+                    'duty_status' => $dutyStatus,
+                    'remark' => $remark,
                 ];
-            })->values();
+            });
 
-        $schedules = Schedule::with('user')->get()->map(function ($s) {
-            return [
-                'id' => $s->id,
-                'user_id' => $s->user_id,
-                'user_name' => $s->user->name ?? '',
-                'role' => $s->user->role ?? '',
-                'department' => $s->user->department ?? '',
-                'shift_date' => $s->shift_date,
-                'start_time' => $s->start_time,
-                'end_time' => $s->end_time,
-            ];
-        });
 
-        $allUsers = User::all()->map(function ($user) use ($statusColors) {
-            $status = $user->status ?? 'Active';
-            return [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'role' => $user->role,
-                'status' => $status,
-                'statusColor' => $statusColors[$status] ?? 'bg-gray-100 text-gray-700',
-            ];
-        });
 
         return Inertia::render('AdminDashboard', [
             'stats' => [
                 'totalUsers' => $totalUsers,
                 'totalDoctors' => $totalDoctors,
                 'totalNurses' => $totalNurses,
-                'totalPatients' => $totalPatients,
             ],
             'doctors' => $doctors,
             'nurses' => $nurses,
             'schedules' => $schedules,
             'allUsers' => $allUsers,
+            'loginLogs' => $loginLogs,
         ]);
     }
 
     /**
-     * List patients (optional, for API or Inertia)
+     * Helper method to map user data with initials and status colors.
      */
-    public function patients()
+    private function mapUserWithStatus(User $user, array $statusColors): array
     {
-        $patients = Patient::with(['doctor', 'nurse'])->get();
+        $initials = collect(explode(' ', $user->name))
+            ->map(fn($n) => strtoupper(substr($n, 0, 1)))
+            ->join('');
 
-        return response()->json($patients);
+        $status = $user->status ?? 'Active';
+
+        return [
+            'id' => $user->id,
+            'initials' => $initials,
+            'name' => $user->name,
+            'dept' => $user->department ?? 'Unknown',
+            'status' => $status,
+            'ward' => $user->ward ?? 'Not Assigned',
+            'shift' => $user->shift ?? 'Not Assigned',
+            'statusColor' => $statusColors[$status] ?? 'bg-gray-100 text-gray-700',
+        ];
     }
 
     /**
-     * Store a new patient
-     */
-    public function storePatient(Request $request)
-    {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'patient_code' => ['required', 'string', 'max:255', 'unique:patients,patient_code'],
-            'age' => ['required', 'integer', 'min:0'],
-            'gender' => ['required', Rule::in(['Male', 'Female', 'Other'])],
-            'disease_categories' => ['nullable', 'json'],
-            'appointment_start_time' => ['nullable', 'date_format:H:i'],
-            'appointment_end_time' => ['nullable', 'date_format:H:i'],
-            'appointment_date' => ['nullable', 'date'],
-            'reason' => ['nullable', 'string'],
-            'status' => ['nullable', Rule::in(['Completed', 'Upcoming'])],
-            'room' => ['nullable', 'string'],
-            'admitted' => ['boolean'],
-            'admission_timestamp' => ['nullable', 'date'],
-            'discharge_timestamp' => ['nullable', 'date'],
-            'doctor_id' => [
-                'nullable',
-                'exists:users,id',
-                function ($attribute, $value, $fail) {
-                    $user = User::find($value);
-                    if ($user && $user->role !== 'doctor') {
-                        $fail('Selected doctor is not valid.');
-                    }
-                },
-            ],
-            'nurse_id' => [
-                'nullable',
-                'exists:users,id',
-                function ($attribute, $value, $fail) {
-                    $user = User::find($value);
-                    if ($user && $user->role !== 'nurse') {
-                        $fail('Selected nurse is not valid.');
-                    }
-                },
-            ],
-        ]);
-
-        $patient = Patient::create($validated);
-
-        return response()->json([
-            'message' => 'Patient created successfully.',
-            'patient' => $patient,
-        ], 201);
-    }
-
-    /**
-     * Update existing patient
-     */
-    public function updatePatient(Request $request, Patient $patient)
-    {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'patient_code' => ['required', 'string', 'max:255', Rule::unique('patients', 'patient_code')->ignore($patient->id)],
-            'age' => ['required', 'integer', 'min:0'],
-            'gender' => ['required', Rule::in(['Male', 'Female', 'Other'])],
-            'disease_categories' => ['nullable', 'json'],
-            'appointment_start_time' => ['nullable', 'date_format:H:i'],
-            'appointment_end_time' => ['nullable', 'date_format:H:i'],
-            'appointment_date' => ['nullable', 'date'],
-            'reason' => ['nullable', 'string'],
-            'status' => ['nullable', Rule::in(['Completed', 'Upcoming'])],
-            'room' => ['nullable', 'string'],
-            'admitted' => ['boolean'],
-            'admission_timestamp' => ['nullable', 'date'],
-            'discharge_timestamp' => ['nullable', 'date'],
-            'doctor_id' => [
-                'nullable',
-                'exists:users,id',
-                function ($attribute, $value, $fail) {
-                    $user = User::find($value);
-                    if ($user && $user->role !== 'doctor') {
-                        $fail('Selected doctor is not valid.');
-                    }
-                },
-            ],
-            'nurse_id' => [
-                'nullable',
-                'exists:users,id',
-                function ($attribute, $value, $fail) {
-                    $user = User::find($value);
-                    if ($user && $user->role !== 'nurse') {
-                        $fail('Selected nurse is not valid.');
-                    }
-                },
-            ],
-        ]);
-
-        $patient->update($validated);
-
-        return response()->json([
-            'message' => 'Patient updated successfully.',
-            'patient' => $patient,
-        ]);
-    }
-
-    /**
-     * Delete patient
-     */
-    public function deletePatient(Patient $patient)
-    {
-        $patient->delete();
-        return response()->json(['message' => 'Patient deleted successfully.']);
-    }
-
-
-    /**
-     * Update user role and status
+     * Update user role and status.
      */
     public function updateUserRole(Request $request, User $user)
     {
@@ -233,15 +139,16 @@ class ManagementController extends Controller
             'status' => 'nullable|string|in:Active,Retired',
         ]);
 
-        $user->role = $request->role;
-        $user->status = $request->status;
-        $user->save();
+        $user->update([
+            'role' => $request->role,
+            'status' => $request->status,
+        ]);
 
         return response()->json(['message' => 'User updated successfully']);
     }
 
     /**
-     * Store new staff user
+     * Store new staff user.
      */
     public function storeStaff(Request $request)
     {
@@ -266,7 +173,7 @@ class ManagementController extends Controller
     }
 
     /**
-     * Create or update schedule
+     * Create or update schedule.
      */
     public function updateOrCreateSchedule(Request $request, $id = null)
     {
@@ -280,12 +187,14 @@ class ManagementController extends Controller
         if ($id) {
             $schedule = Schedule::findOrFail($id);
             $schedule->update($validated);
+            $message = 'Schedule updated successfully.';
         } else {
             $schedule = Schedule::create($validated);
+            $message = 'Schedule created successfully.';
         }
 
         return response()->json([
-            'message' => $id ? 'Schedule updated successfully.' : 'Schedule created successfully.',
+            'message' => $message,
             'schedule' => $schedule,
         ]);
     }

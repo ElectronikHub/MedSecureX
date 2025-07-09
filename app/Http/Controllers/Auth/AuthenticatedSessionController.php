@@ -7,53 +7,102 @@ use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class AuthenticatedSessionController extends Controller
 {
-    /**
-     * Display the login view.
-     */
+    protected int $maxAttempts = 5;
+
     public function create(): Response
     {
         return Inertia::render('Auth/Login', [
-            'canResetPassword' => Route::has('password.request'),
+            'canResetPassword' => route('password.request') !== null,
             'status' => session('status'),
         ]);
     }
 
-    /**
-     * Handle an incoming authentication request.
-     */
     public function store(LoginRequest $request): RedirectResponse
     {
-        // Authenticate the user using the validated LoginRequest
-        $request->authenticate();
+        $email = Str::lower($request->input('email'));
+        $ip = $request->ip();
+        $throttleKey = $email . '|' . $ip;
 
-        // Regenerate session to prevent fixation
+        // Check if user is locked out
+        $lockoutCount = Cache::get($throttleKey . ':lockout_count', 0);
+        $lockoutExpiresAt = Cache::get($throttleKey . ':lockout_expires_at');
+
+        if ($lockoutExpiresAt && now()->lessThan($lockoutExpiresAt)) {
+            $secondsLeft = now()->diffInSeconds($lockoutExpiresAt);
+            throw ValidationException::withMessages([
+                'email' => ["Too many login attempts. Please try again in {$secondsLeft} seconds."],
+            ]);
+        } elseif ($lockoutExpiresAt && now()->greaterThanOrEqualTo($lockoutExpiresAt)) {
+            // Lockout expired, reset counters
+            Cache::forget($throttleKey . ':lockout_expires_at');
+            Cache::forget($throttleKey . ':lockout_count');
+            RateLimiter::clear($throttleKey);
+            $lockoutCount = 0;
+        }
+
+        if (RateLimiter::tooManyAttempts($throttleKey, $this->maxAttempts)) {
+            // Increment lockout count
+            $lockoutCount++;
+            Cache::put($throttleKey . ':lockout_count', $lockoutCount, now()->addDay());
+
+            // Determine lockout duration based on lockout count
+            switch ($lockoutCount) {
+                case 1:
+                    $lockoutDuration = now()->addMinutes(5);
+                    break;
+                case 2:
+                    $lockoutDuration = now()->addMinutes(20);
+                    break;
+                default:
+                    $lockoutDuration = now()->addDay();
+                    break;
+            }
+
+            Cache::put($throttleKey . ':lockout_expires_at', $lockoutDuration, $lockoutDuration);
+            RateLimiter::clear($throttleKey);
+
+            $secondsLeft = now()->diffInSeconds($lockoutDuration);
+
+            throw ValidationException::withMessages([
+                'email' => ["Too many login attempts. You are locked out for {$secondsLeft} seconds."],
+            ]);
+        }
+
+        // Attempt login
+        if (!Auth::attempt($request->only('email', 'password'), $request->boolean('remember'))) {
+            RateLimiter::hit($throttleKey, 60); // Count attempt, expire in 60 seconds
+            throw ValidationException::withMessages([
+                'email' => ['The provided credentials are incorrect.'],
+            ]);
+        }
+
+        // Successful login: clear attempts and lockout info
+        RateLimiter::clear($throttleKey);
+        Cache::forget($throttleKey . ':lockout_count');
+        Cache::forget($throttleKey . ':lockout_expires_at');
+
         $request->session()->regenerate();
 
-        // Get the authenticated user
+        // Redirect based on role
         $user = Auth::user();
 
-        // Redirect based on user role
-        switch ($user->role) {
-            case 'admin':
-                return redirect()->intended('/admin/dashboard');
-            case 'doctor':
-                return redirect()->intended('/doctor/dashboard');
-            case 'nurse':
-                return redirect()->intended('/nurse/dashboard');
-            default:
-                return redirect()->intended('/dashboard'); // fallback route
-        }
+        return match ($user->role) {
+            'admin' => redirect()->intended('/admin/dashboard'),
+            'doctor' => redirect()->intended('/doctor/dashboard'),
+            'nurse' => redirect()->intended('/nurse/dashboard'),
+            default => redirect()->intended('/dashboard'),
+        };
     }
 
-    /**
-     * Destroy an authenticated session.
-     */
     public function destroy(Request $request): RedirectResponse
     {
         Auth::guard('web')->logout();

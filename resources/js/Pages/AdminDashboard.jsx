@@ -6,8 +6,9 @@ import StaffPanel from "./Admin/StaffPanel";
 import ScheduleTable from "./Admin/ScheduleTable";
 import EditScheduleModal from "./Admin/EditScheduleModal";
 import UsersPanel from "./Admin/UsersPanel";
+import LoginLogsPanel from "./Admin/LoginLogsPanel"; // Import login logs panel
 
-export default function AdminDashboard({ stats, doctors, nurses, schedules, allUsers }) {
+export default function AdminDashboard({ stats, doctors, nurses, schedules, allUsers, loginLogs }) {
     const [editingSchedule, setEditingSchedule] = useState(null);
     const [showModal, setShowModal] = useState(false);
     const [scheduleList, setScheduleList] = useState(schedules);
@@ -85,14 +86,22 @@ export default function AdminDashboard({ stats, doctors, nurses, schedules, allU
                             Admin Dashboard
                         </h1>
                         <p className="mt-2 text-gray-600 dark:text-gray-300 mb-6">Overview of system statistics</p>
+
+                        {/* Stats Cards */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mt-6">
                             <StatCard title="Total Users" value={stats.totalUsers} color="text-blue-600" />
                             <StatCard title="Total Doctors" value={stats.totalDoctors} color="text-green-600" />
                             <StatCard title="Total Nurses" value={stats.totalNurses} color="text-yellow-600" />
                             <StatCard title="Total Patients" value={stats.totalPatients} color="text-purple-600" />
                         </div>
+
+                        {/* Staff Panel */}
                         <StaffPanel doctors={doctors} nurses={nurses} />
+
+                        {/* Schedule Table */}
                         <ScheduleTable schedules={scheduleList} onEdit={handleEdit} onAdd={handleAdd} />
+
+                        {/* Edit Schedule Modal */}
                         {showModal && (
                             <EditScheduleModal
                                 schedule={editingSchedule}
@@ -102,7 +111,12 @@ export default function AdminDashboard({ stats, doctors, nurses, schedules, allU
                                 loading={loading}
                             />
                         )}
+
+                        {/* Users Panel */}
                         <UsersPanel users={allUsers} />
+                        &nbsp;
+                        {/* Login Logs Panel */}
+                        <LoginLogsPanel logs={loginLogs} />
                     </div>
                 </main>
                 <footer className="text-center text-xs text-gray-400 dark:text-gray-500 py-4 transition-colors duration-500">
