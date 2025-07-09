@@ -23,6 +23,7 @@
         "vite": "^6.2.4"
     },
     "dependencies": {
+        "@inertiajs/inertia": "^0.11.1",
         "daisyui": "^5.0.43",
         "qrcode.react": "^4.2.0",
         "react-qr-code": "^2.0.16"

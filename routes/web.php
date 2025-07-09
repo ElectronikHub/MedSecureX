@@ -4,11 +4,14 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Inertia\Inertia;
 use App\Http\Controllers\Admin\ManagementController as AdminManagement;
 use App\Http\Controllers\Nurse\ManagementController as NurseManagement;
 use App\Http\Controllers\Doctor\ManagementController as DoctorManagement;
 use App\Models\Patient;
+use Illuminate\Support\Facades\Mail;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -26,6 +29,23 @@ Route::get('/', function () {
     ]);
 });
 
+// Email Verification Notice Page (shown to unverified users)
+Route::get('/email/verify', function () {
+    return Inertia::render('Auth/VerifyEmail'); // Your React/Inertia verification page
+})->middleware('auth')->name('verification.notice');
+
+// Email Verification Handler (clicked from email link)
+Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
+    $request->fulfill();
+    return redirect('/dashboard'); // Redirect after successful verification
+})->middleware(['auth', 'signed'])->name('verification.verify');
+
+// Resend Verification Email
+Route::post('/email/verification-notification', function (Request $request) {
+    $request->user()->sendEmailVerificationNotification();
+    return back()->with('message', 'Verification link sent!');
+})->middleware(['auth', 'throttle:6,1'])->name('verification.send');
+
 // Default dashboard route for authenticated and verified users
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
@@ -38,33 +58,30 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-// Role-based dashboards and management routes for authenticated users
-Route::middleware(['auth'])->group(function () {
+// Role-based dashboards and management routes for authenticated and verified users
+Route::middleware(['auth', 'verified'])->group(function () {
 
-    // Admin routes - accessible only by users with 'admin' role
+    // Admin routes
     Route::prefix('admin')->name('admin.')->middleware('role:admin')->group(function () {
         Route::get('/dashboard', [AdminManagement::class, 'dashboard'])->name('dashboard');
 
-        // User role management
         Route::put('/users/{user}/role', [AdminManagement::class, 'updateUserRole'])->name('users.updateRole');
         Route::post('/users', [AdminManagement::class, 'storeStaff'])->name('users.storeStaff');
 
-        // Schedule management
         Route::put('/schedules/{schedule}', [AdminManagement::class, 'updateOrCreateSchedule'])->name('schedules.update');
         Route::post('/schedules', [AdminManagement::class, 'updateOrCreateSchedule'])->name('schedules.store');
     });
 
-    // Nurse routes - accessible only by users with 'nurse' role
+    // Nurse routes
     Route::prefix('nurse')->name('nurse.')->middleware('role:nurse')->group(function () {
         Route::get('/dashboard', [NurseManagement::class, 'dashboard'])->name('dashboard');
 
-        // Patient management
         Route::post('/patients', [NurseManagement::class, 'storePatient'])->name('patients.store');
         Route::put('/patients/{patient}', [NurseManagement::class, 'updatePatient'])->name('patients.update');
         Route::delete('/patients/{patient}', [NurseManagement::class, 'deletePatient'])->name('patients.delete');
     });
 
-    // Doctor routes - accessible only by users with 'doctor' role
+    // Doctor routes
     Route::prefix('doctor')->name('doctor.')->middleware('role:doctor')->group(function () {
         Route::get('/dashboard', [DoctorManagement::class, 'dashboard'])->name('dashboard');
         // Add doctor-specific routes here as needed
@@ -97,5 +114,49 @@ Route::get('/api/patients/{id}', function ($id) {
     return response()->json($patient);
 });
 
-// Auth routes (login, registration, password reset, etc.)
+// Test email route (optional, protect with auth in production)
+Route::get('/test-mail', function () {
+    Mail::raw('This is a test email from Laravel using Mailtrap sandbox SMTP!', function ($message) {
+        $message->to('vincezamora27@gmail.com')
+            ->subject('Test Email from Laravel');
+    });
+
+    return 'Test email sent! Check your Mailtrap inbox.';
+})->middleware('auth');
+
+
+// OTP verification form
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/otp-verify', function () {
+        return Inertia::render('Auth/OtpVerify'); // Your OTP input page (React/Inertia)
+    })->name('otp.verify');
+
+    Route::post('/otp-verify', function (Request $request) {
+        $request->validate([
+            'otp' => 'required|digits:6',
+        ]);
+
+        $user = $request->user();
+
+        // Retrieve OTP record from DB or cache (implement your own logic)
+        $otpRecord = \App\Models\OtpCode::where('user_id', $user->id)
+            ->where('otp', $request->otp)
+            ->where('expires_at', '>', now())
+            ->first();
+
+        if (!$otpRecord) {
+            return back()->withErrors(['otp' => 'Invalid or expired OTP']);
+        }
+
+        // Mark OTP as verified in session
+        Session::put('otp_verified', true);
+
+        // Delete OTP record or mark as used
+        $otpRecord->delete();
+
+        return redirect()->intended('/dashboard');
+    })->name('otp.verify.post');
+});
+
+// Auth routes (login, registration, password reset, email verification, etc.)
 require __DIR__ . '/auth.php';

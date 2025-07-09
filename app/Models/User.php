@@ -2,11 +2,12 @@
 
 namespace App\Models;
 
+use Illuminate\Contracts\Auth\MustVerifyEmail; // Add this import
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail // Implement interface here
 {
     use HasFactory, Notifiable;
 
@@ -21,7 +22,6 @@ class User extends Authenticatable
         'status',  // add this
     ];
 
-
     /**
      * The attributes that should be hidden for arrays.
      */
@@ -35,7 +35,7 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'password' => 'hashed', // Only for Laravel 10+; remove if using older Laravel
+        'password' => 'hashed', // Laravel 10+ feature; remove if using older version
     ];
 
     /**
@@ -47,16 +47,11 @@ class User extends Authenticatable
     }
 
     /**
-     * If this user is a doctor, get patients assigned to them.
-     * (Assumes patients table has a doctor_id column)
+     * Get the patients assigned to this user if they are a doctor.
+     * Assumes patients table has a doctor_id foreign key.
      */
     public function patients()
     {
         return $this->hasMany(Patient::class, 'doctor_id');
     }
 }
-
-
-// Note: Ensure that the User model is linked to the Doctor model via a one-to-one relationship if needed.
-// This code assumes that the User model exists and has a one-to-many relationship with the Patient
-// and Schedule models. Adjust the relationships based on your application's requirements.

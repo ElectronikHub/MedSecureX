@@ -3,7 +3,8 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use App\Http\Middleware\RoleMiddleware; // Import your RoleMiddleware class
+use App\Http\Middleware\RoleMiddleware; // Existing import
+use App\Http\Middleware\EnsureOtpVerified; // Import your OTP middleware
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -18,10 +19,10 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
         ]);
 
-        // Register a single alias 'role' for RoleMiddleware
-        // This allows you to use middleware like ->middleware('role:admin')
+        // Register aliases for your middlewares
         $middleware->alias([
             'role' => RoleMiddleware::class,
+            'otp.verified' => EnsureOtpVerified::class, // Add this line
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
